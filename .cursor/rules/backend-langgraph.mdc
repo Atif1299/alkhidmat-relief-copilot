@@ -1,0 +1,39 @@
+---
+description: Backend conventions — FastAPI, LangGraph, tools, Tier A scope
+globs: backend/**/*
+alwaysApply: false
+---
+
+# Backend — LangGraph Aid Desk
+
+## Orchestration
+
+Use **LangGraph** only. Graph: `Intake → Triage → Integrity → Matcher → Dispatch`.
+
+Never route Intake directly to Matcher — Integrity is mandatory.
+
+## HITL
+
+Pause graph when `priority == critical` OR `integrity.risk_score` high. Resume only via supervisor `approve|reject` API.
+
+Append every node execution to `agent_trace` for SSE/UI.
+
+## LLM
+
+DashScope Qwen via `backend/app/services/llm.py`. Support `LLM_MODE=mock` for tests.
+
+Bilingual prompts in `backend/app/agents/prompts/` (en + ur).
+
+## Tools
+
+Implement as plain Python functions in `backend/app/tools/` — MCP-style contracts. No Hermes runtime.
+
+## Tier scope
+
+Implement **Tier A only** unless user explicitly requests Tier B and Tier A tests are green.
+
+## Tests required
+
+- Happy path (Urdu food)
+- Duplicate phone flag
+- Critical → HITL → approve

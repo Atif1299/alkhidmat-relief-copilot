@@ -1,0 +1,34 @@
+---
+description: Frontend conventions — Next.js 14 Aid Desk UI, Tier A routes
+globs: frontend/**/*
+alwaysApply: false
+---
+
+# Frontend — Next.js 14 Aid Desk
+
+## Routes (Tier A)
+
+| Route | Required UI |
+|-------|-------------|
+| `/chat` | Input, Urdu sample chips, **AgentTrace** streaming sidebar |
+| `/tickets` | Status badges, expandable agent trace |
+| `/supervisor` | Pending queue, approve/reject + note |
+| `/dashboard` | cases today, avg time-to-ticket, escalation % |
+
+## Agent trace
+
+**Visible on every chat run** — key judge/demo moment. Stream from SSE `/api/v1/chat`.
+
+Show agent name, action, timestamp per step.
+
+## API client
+
+`frontend/lib/api.ts` — base URL from `NEXT_PUBLIC_API_URL`.
+
+## Tier scope
+
+Tier A UI first. Tier B (role-based layouts, RAG citations UI) only after Tier A complete.
+
+## Style
+
+Professional ops desk — not consumer chat bubble toy. Clear status, tables, metrics cards.

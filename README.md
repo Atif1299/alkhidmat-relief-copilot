@@ -1,0 +1,40 @@
+# Alkhidmat Relief Copilot
+
+Multi-agent AI aid desk for relief NGOs — Alibaba Cloud AI Hackathon Pakistan 2026.
+
+> A multi-agent AI desk that turns an aid request (Urdu/English) into a verified, routed relief ticket — with human approval for high-risk cases.
+
+## Status
+
+**Planning complete** — Tier A implementation starts next.
+
+## Product
+
+NGO **Aid Desk SaaS** module: citizen request → LangGraph agents (Intake → Triage → Integrity → Matcher → Dispatch) → ticket with HITL supervisor for critical cases.
+
+## Stack (planned)
+
+| Layer | Technology |
+|-------|------------|
+| Orchestration | LangGraph |
+| LLM | Qwen (DashScope) |
+| API | FastAPI |
+| UI | Next.js 14 |
+| DB | SQLite |
+
+## Key docs
+
+| Doc | Purpose |
+|-----|---------|
+| [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) | Product identity + Tier A/B/C |
+| [AGENTS.md](AGENTS.md) | Product + workflow agents |
+| [docs/HACKATHON_MASTER_PLAN.md](docs/HACKATHON_MASTER_PLAN.md) | Timeline and scope |
+| [Alkhidmat_Relief_Copilot.md](Alkhidmat_Relief_Copilot.md) | Original hackathon brief |
+
+## Repo
+
+https://github.com/Atif1299/alkhidmat-relief-copilot
+
+## Event
+
+Alibaba Cloud AI Hackathon Pakistan 2026 — Alkhidmat Foundation / Bano Qabil — *AI for Pakistan's Future*

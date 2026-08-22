@@ -1,0 +1,37 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+*.db
+*.sqlite3
+
+# Node
+node_modules/
+.next/
+out/
+.npm
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Thumbs
+Thumbs.db
+
+# Logs
+*.log
+
+# Cursor local (keep .cursor/rules and .cursor/skills — committed)
+.cursor/projects/

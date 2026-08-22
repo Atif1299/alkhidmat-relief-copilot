@@ -1,0 +1,84 @@
+---
+description: Core context for Alkhidmat Relief Copilot — product identity, tiers, stack, repo
+alwaysApply: true
+---
+
+# Alkhidmat Relief Copilot
+
+Alibaba Cloud AI Hackathon Pakistan 2026 — **NGO Aid Desk SaaS** (not a chatbot).
+
+## Product identity
+
+An **agentic operations desk** that turns Urdu/English aid requests into **verified, resource-matched tickets** with **HITL** for high-risk cases.
+
+**Winning signal:** Desk operator and requester **know what happens next** (ticket ID, match, or waiting for supervisor).
+
+**Source of truth:** `docs/PRODUCT_DEFINITION.md`
+
+## Repository
+
+- **Name:** `alkhidmat-relief-copilot`
+- **URL:** https://github.com/Atif1299/alkhidmat-relief-copilot.git
+- **Commit `.cursor/`** to the repo — rules and skills are part of the project.
+
+## Phase
+
+**Phase 1 — Build Tier A first**, then Tier B only after Tier A E2E passes.
+
+Trigger implementation: user says **"start build"** or names a plan todo.
+
+## Stack (locked)
+
+| Layer | Choice | Do NOT use |
+|-------|--------|------------|
+| Orchestration | **LangGraph** (governed graph + HITL interrupt) | Hermes gateway, CrewAI-only |
+| LLM | Qwen via DashScope / Qoder | OpenAI-only stack |
+| API | FastAPI | |
+| DB | SQLite → Postgres-ready | |
+| UI | **Next.js 14** App Router | |
+| Tools | MCP-style functions in `backend/app/tools/` | |
+
+**Why not Hermes:** Product needs deterministic NGO workflow + custom SaaS UI + supervisor gate — LangGraph fits; Hermes is autonomous gateway-centric.
+
+## Tier discipline
+
+### Tier A — ship first (all required before Tier B)
+
+1. Agent trace visible in UI
+2. HITL supervisor (approve/reject)
+3. Duplicate + critical demo paths
+4. Metrics dashboard
+5. Urdu + English live
+6. Qwen/DashScope wired
+7. Audit log
+
+### Tier B — only after Tier A E2E green
+
+Light RAG/SOPs, role-based views, case timeline, richer Lahore seed, PDF export.
+
+### Tier C — defer unless rubric demands
+
+WhatsApp production, real Alkhidmat API, mobile apps, 10+ agents, billing, CNIC OCR.
+
+## Non-negotiable graph rule
+
+`Intake → Triage → Integrity → Matcher → Dispatch` — **never skip Integrity** on create.
+
+HITL gate when `critical` priority or high integrity risk.
+
+## Git workflow
+
+After **each** implementation todo: meaningful commit + push to `origin/main`.
+
+Format: `feat(scope): description`
+
+## Key docs
+
+- `docs/PRODUCT_DEFINITION.md` — tiers + product identity
+- `docs/ARCHITECTURE.md` — system design (created during build)
+- `AGENTS.md` — product agents
+- `.cursor/skills/alkhidmat-build/SKILL.md` — implementation steps
+
+## Pitch
+
+> A multi-agent AI desk that turns an aid request (Urdu/English) into a verified, routed relief ticket — with human approval for high-risk cases.
