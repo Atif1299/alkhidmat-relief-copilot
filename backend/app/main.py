@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import cases, chat, metrics, supervisor
 from app.config import settings
 from app.db.seed import run_seed
 from app.db.session import init_db
@@ -32,6 +33,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(chat.router)
+app.include_router(cases.router)
+app.include_router(supervisor.router)
+app.include_router(metrics.router)
 
 
 @app.get("/health")

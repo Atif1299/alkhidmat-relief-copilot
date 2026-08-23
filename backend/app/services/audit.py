@@ -1,4 +1,4 @@
-"""Audit logging for agent steps and supervisor decisions."""
+"""Audit logger."""
 
 from __future__ import annotations
 
