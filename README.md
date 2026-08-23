@@ -6,11 +6,7 @@ Multi-agent AI aid desk for relief NGOs — Alibaba Cloud AI Hackathon Pakistan 
 
 ## Status
 
-**Tier A build in progress** — LangGraph aid desk (FastAPI + Next.js 14 + Qwen).
-
-## Product
-
-NGO **Aid Desk SaaS** module: citizen request → LangGraph agents (Intake → Triage → Integrity → Matcher → Dispatch) → ticket with HITL supervisor for critical cases.
+**Tier A complete** — LangGraph Aid Desk with HITL, agent trace UI, metrics, and E2E tests.
 
 ## Stack
 
@@ -18,7 +14,7 @@ NGO **Aid Desk SaaS** module: citizen request → LangGraph agents (Intake → T
 |-------|------------|
 | Orchestration | LangGraph |
 | LLM | Qwen (DashScope) / mock mode |
-| API | FastAPI |
+| API | FastAPI + SSE |
 | UI | Next.js 14 |
 | DB | SQLite |
 
@@ -29,9 +25,11 @@ NGO **Aid Desk SaaS** module: citizen request → LangGraph agents (Intake → T
 ```bash
 cd backend
 python -m venv .venv
-# Windows: .venv\Scripts\activate
+# Windows:
+.venv\Scripts\activate
 pip install -r requirements.txt
-copy ..\.env.example .env   # or set env vars
+copy ..\.env.example .env
+set LLM_MODE=mock
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -40,24 +38,43 @@ uvicorn app.main:app --reload --port 8000
 ```bash
 cd frontend
 npm install
+copy .env.local.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000 — API expected at http://localhost:8000.
+Open http://localhost:3000/chat
 
-## Key docs
+### Tests
+
+```bash
+cd backend
+set LLM_MODE=mock
+pytest -q
+```
+
+## Demo paths
+
+1. Urdu food request → Food ticket + resource match  
+2. Duplicate phone `03001234567` → HITL pending  
+3. Critical medical → Supervisor approve → ticket  
+
+See [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
+
+## Docs
 
 | Doc | Purpose |
 |-----|---------|
-| [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) | Product identity + Tier A/B/C |
-| [AGENTS.md](AGENTS.md) | Product + workflow agents |
-| [docs/HACKATHON_MASTER_PLAN.md](docs/HACKATHON_MASTER_PLAN.md) | Timeline and scope |
-| [Alkhidmat_Relief_Copilot.md](Alkhidmat_Relief_Copilot.md) | Original hackathon brief |
+| [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) | Product + Tier A/B/C |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design |
+| [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) | 3-minute demo |
+| [AGENTS.md](AGENTS.md) | Product agents |
+
+## Alibaba Cloud
+
+- **DashScope / Qwen** — set `DASHSCOPE_API_KEY` and `LLM_MODE=qwen`
+- **Qoder** — official hackathon IDE (Skills / MCP narrative)
+- Deploy API on ECS / Function Compute; frontend on Vercel or static host
 
 ## Repo
 
 https://github.com/Atif1299/alkhidmat-relief-copilot
-
-## Event
-
-Alibaba Cloud AI Hackathon Pakistan 2026 — Alkhidmat Foundation / Bano Qabil — *AI for Pakistan's Future*
