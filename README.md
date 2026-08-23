@@ -6,21 +6,44 @@ Multi-agent AI aid desk for relief NGOs — Alibaba Cloud AI Hackathon Pakistan 
 
 ## Status
 
-**Planning complete** — Tier A implementation starts next.
+**Tier A build in progress** — LangGraph aid desk (FastAPI + Next.js 14 + Qwen).
 
 ## Product
 
 NGO **Aid Desk SaaS** module: citizen request → LangGraph agents (Intake → Triage → Integrity → Matcher → Dispatch) → ticket with HITL supervisor for critical cases.
 
-## Stack (planned)
+## Stack
 
 | Layer | Technology |
 |-------|------------|
 | Orchestration | LangGraph |
-| LLM | Qwen (DashScope) |
+| LLM | Qwen (DashScope) / mock mode |
 | API | FastAPI |
 | UI | Next.js 14 |
 | DB | SQLite |
+
+## Quick start
+
+### Backend
+
+```bash
+cd backend
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+copy ..\.env.example .env   # or set env vars
+uvicorn app.main:app --reload --port 8000
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:3000 — API expected at http://localhost:8000.
 
 ## Key docs
 

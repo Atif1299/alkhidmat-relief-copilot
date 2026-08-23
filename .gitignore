@@ -27,7 +27,7 @@ out/
 .idea/
 .vscode/
 *.swp
-.DS_Thumbs
+.DS_Store
 Thumbs.db
 
 # Logs
@@ -35,3 +35,6 @@ Thumbs.db
 
 # Cursor local (keep .cursor/rules and .cursor/skills — committed)
 .cursor/projects/
+
+# Data
+backend/data/
