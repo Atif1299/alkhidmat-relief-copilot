@@ -1,14 +1,28 @@
 """Alkhidmat Relief Copilot API — Tier A Aid Desk."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.db.seed import run_seed
+from app.db.session import init_db
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    init_db()
+    info = run_seed()
+    print(f"[startup] DB ready: {info}")
+    yield
+
 
 app = FastAPI(
     title="Alkhidmat Relief Copilot",
     description="Multi-agent NGO aid desk — Intake → Triage → Integrity → Matcher → Dispatch",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
