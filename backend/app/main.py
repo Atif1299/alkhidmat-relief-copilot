@@ -42,4 +42,4 @@ app.include_router(metrics.router)
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "alkhidmat-relief-copilot", "tier": "A"}
+    return {"status": "ok", "service": "alkhidmat-relief-copilot", "tier": "B"}

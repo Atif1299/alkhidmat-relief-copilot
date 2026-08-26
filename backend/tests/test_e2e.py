@@ -79,3 +79,39 @@ def test_metrics(client):
     assert "cases_today" in data
     assert "avg_time_to_ticket_ms" in data
     assert "escalation_pct" in data
+
+
+def test_timeline_and_pdf(client):
+    phone = f"0301{uuid.uuid4().hex[:7]}"
+    created = client.post(
+        "/api/v1/chat/sync",
+        json={
+            "message": f"Need food packs Township Lahore family of 3. Phone {phone}"
+        },
+    )
+    assert created.status_code == 200
+    case_id = created.json()["case_id"]
+    assert created.json()["status"] == "dispatched"
+
+    timeline = client.get(f"/api/v1/cases/{case_id}/timeline")
+    assert timeline.status_code == 200
+    body = timeline.json()
+    keys = [s["key"] for s in body["stages"] if s["state"] != "skipped"]
+    assert "requested" in keys
+    assert "knowledge" in keys
+    assert "dispatched" in keys
+
+    detail = client.get(f"/api/v1/cases/{case_id}")
+    assert detail.status_code == 200
+    assert detail.json().get("sop_hits")
+    assert detail.json().get("timeline")
+
+    pdf = client.get(f"/api/v1/cases/{case_id}/export.pdf")
+    assert pdf.status_code == 200
+    assert pdf.headers["content-type"].startswith("application/pdf")
+    assert pdf.content[:4] == b"%PDF"
+
+
+def test_health_tier_b(client):
+    r = client.get("/health")
+    assert r.json().get("tier") == "B"
