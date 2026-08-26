@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { AgentTrace } from "@/components/AgentTrace";
+import { SopCitations } from "@/components/SopCitations";
 import { chatStream, type AgentStep, type ChatResult } from "@/lib/api";
+import Link from "next/link";
 
 const SAMPLES = [
   {
@@ -55,8 +57,8 @@ export default function ChatPage() {
     <div>
       <h1>Citizen intake</h1>
       <p className="muted">
-        Submit Urdu or English aid requests. Watch Intake → Triage → Integrity → Matcher → Dispatch
-        run live.
+        Submit Urdu or English aid requests. Watch Intake → Triage → Knowledge → Integrity → Matcher
+        → Dispatch run live.
       </p>
 
       <div className="grid-2" style={{ marginTop: "1rem" }}>
@@ -95,11 +97,18 @@ export default function ChatPage() {
                 {result.integrity?.duplicate_flag ? " · duplicate flagged" : ""}
               </p>
               {result.notification && <p>{result.notification}</p>}
+              {result.case_id && (
+                <p>
+                  <Link href={`/cases/${result.case_id}`}>Open case timeline &amp; PDF →</Link>
+                </p>
+              )}
               {result.status === "pending_hitl" && (
                 <p>
                   Waiting for supervisor — open <a href="/supervisor">Supervisor</a>.
                 </p>
               )}
+              <h3 style={{ marginTop: "1rem" }}>SOP citations</h3>
+              <SopCitations hits={result.sop_hits} />
             </div>
           )}
         </section>

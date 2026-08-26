@@ -6,15 +6,19 @@ alwaysApply: false
 
 # Frontend — Next.js 14 Aid Desk
 
-## Routes (Tier A)
+## Routes (Tier B)
 
 | Route | Required UI |
 |-------|-------------|
-| `/chat` | Input, Urdu sample chips, **AgentTrace** streaming sidebar |
-| `/tickets` | Status badges, expandable agent trace |
+| `/chat` | Input, Urdu sample chips, **AgentTrace**, SOP citations |
+| `/tickets` | Status badges, links to case detail, PDF |
+| `/cases/[id]` | Timeline ladder, citations, export PDF, AgentTrace |
 | `/supervisor` | Pending queue, approve/reject + note |
 | `/dashboard` | cases today, avg time-to-ticket, escalation % |
 
+## Roles
+
+Demo role switcher in topbar (`requester` | `desk` | `supervisor`) via localStorage. Nav gated client-side.
 ## Agent trace
 
 **Visible on every chat run** — key judge/demo moment. Stream from SSE `/api/v1/chat`.

@@ -8,6 +8,14 @@ export type AgentStep = {
   ts_ms?: number;
 };
 
+export type SopHit = {
+  title?: string;
+  category?: string;
+  excerpt?: string;
+  score?: number;
+  source_file?: string;
+};
+
 export type ChatResult = {
   case_id?: string;
   ticket_id?: string | null;
@@ -20,6 +28,7 @@ export type ChatResult = {
   volunteer?: { name?: string; phone?: string } | null;
   agent_trace?: AgentStep[];
   notification?: string;
+  sop_hits?: SopHit[];
   integrity?: {
     risk_score?: number;
     duplicate_flag?: boolean;
@@ -106,4 +115,22 @@ export async function getMetrics() {
   const res = await fetch(`${API_URL}/api/v1/metrics`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load metrics");
   return res.json();
+}
+
+export async function getCase(caseId: string) {
+  const res = await fetch(`${API_URL}/api/v1/cases/${caseId}`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to load case");
+  return res.json();
+}
+
+export async function getCaseTimeline(caseId: string) {
+  const res = await fetch(`${API_URL}/api/v1/cases/${caseId}/timeline`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to load timeline");
+  return res.json();
+}
+
+export function caseExportPdfUrl(caseId: string) {
+  return `${API_URL}/api/v1/cases/${caseId}/export.pdf`;
 }

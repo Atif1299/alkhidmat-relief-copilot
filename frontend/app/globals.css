@@ -272,3 +272,91 @@ input {
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.role-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  opacity: 0.95;
+}
+
+.role-switch select {
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.25);
+  color: #f7faf7;
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+}
+
+.citations {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.citations li {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  background: #f7faf7;
+}
+
+.citations p {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 0.65rem;
+  align-items: start;
+}
+
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  margin-top: 0.35rem;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.timeline-item.done .timeline-dot {
+  background: var(--ok);
+}
+
+.timeline-item.active .timeline-dot {
+  background: var(--warn);
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.2);
+}
+
+.timeline-item.pending .timeline-dot {
+  background: #cbd5e1;
+}
+
+a.chip {
+  display: inline-block;
+}

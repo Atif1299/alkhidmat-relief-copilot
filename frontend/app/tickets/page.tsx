@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { AgentTrace } from "@/components/AgentTrace";
-import { listCases, type AgentStep } from "@/lib/api";
+import { caseExportPdfUrl, listCases, type AgentStep } from "@/lib/api";
 
 type CaseRow = {
   id: string;
@@ -62,7 +63,9 @@ export default function TicketsPage() {
               <Fragment key={c.id}>
                 <tr>
                   <td>
-                    <strong>{c.ticket_id || "—"}</strong>
+                    <Link href={`/cases/${c.id}`}>
+                      <strong>{c.ticket_id || "—"}</strong>
+                    </Link>
                     <div className="muted" style={{ maxWidth: 220 }}>
                       {c.raw_message.slice(0, 80)}
                     </div>
@@ -90,13 +93,26 @@ export default function TicketsPage() {
                   <td>{c.location}</td>
                   <td>{c.requester_phone}</td>
                   <td>
-                    <button
-                      className="chip"
-                      type="button"
-                      onClick={() => setExpanded(expanded === c.id ? null : c.id)}
-                    >
-                      Trace
-                    </button>
+                    <div className="actions">
+                      <Link className="chip" href={`/cases/${c.id}`}>
+                        Detail
+                      </Link>
+                      <button
+                        className="chip"
+                        type="button"
+                        onClick={() => setExpanded(expanded === c.id ? null : c.id)}
+                      >
+                        Trace
+                      </button>
+                      <a
+                        className="chip"
+                        href={caseExportPdfUrl(c.id)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        PDF
+                      </a>
+                    </div>
                   </td>
                 </tr>
                 {expanded === c.id && (
