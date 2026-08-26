@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     llm_mode: str = "mock"  # mock | qwen
     dashscope_api_key: str = ""
     dashscope_model: str = "qwen-plus"
+    # Workspace OpenAI-compatible base (Beijing Model Studio). No trailing slash required.
+    dashscope_base_url: str = (
+        "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    )
     database_url: str = "sqlite:///./data/relief.db"
     cors_origins: str = "http://localhost:3000"
 

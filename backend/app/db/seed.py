@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Case, CaseEvent, Resource, Volunteer
 from app.db.session import SessionLocal, init_db
+from app.tools.sops import index_sops_from_files
 
 # Demo duplicate phone (Tier A acceptance)
 DUPLICATE_DEMO_PHONE = "03001234567"
@@ -235,6 +236,24 @@ def seed_if_empty(db: Session) -> dict:
                     active=True,
                 )
             )
+    else:
+        # Top-up missing Tier B resources without wiping live data
+        existing = {r.name for r in db.query(Resource).all()}
+        for r in RESOURCES:
+            if r["name"] not in existing:
+                db.add(
+                    Resource(
+                        id=_uid(),
+                        category=r["category"],
+                        name=r["name"],
+                        city="Lahore",
+                        area=r["area"],
+                        stock=r["stock"],
+                        capacity=r["capacity"],
+                        contact=r["contact"],
+                        active=True,
+                    )
+                )
 
     if db.query(Volunteer).count() == 0:
         for v in VOLUNTEERS:
@@ -248,15 +267,43 @@ def seed_if_empty(db: Session) -> dict:
                     available=True,
                 )
             )
+    else:
+        existing_v = {v.phone for v in db.query(Volunteer).all()}
+        for v in VOLUNTEERS:
+            if v["phone"] not in existing_v:
+                db.add(
+                    Volunteer(
+                        id=_uid(),
+                        name=v["name"],
+                        phone=v["phone"],
+                        skills=v["skills"],
+                        area=v["area"],
+                        available=True,
+                    )
+                )
 
     if db.query(Case).count() == 0:
         _seed_historical_cases(db)
+    else:
+        # Keep duplicate-demo case fresh so Integrity 48h window still hits
+        demo = (
+            db.query(Case)
+            .filter(Case.requester_phone == DUPLICATE_DEMO_PHONE)
+            .order_by(Case.created_at.desc())
+            .first()
+        )
+        if demo:
+            demo.created_at = datetime.utcnow()
+            demo.status = "dispatched"
+
+    sop_count = index_sops_from_files(db)
 
     db.commit()
     return {
         "resources": db.query(Resource).count(),
         "volunteers": db.query(Volunteer).count(),
         "cases": db.query(Case).count(),
+        "sop_chunks": sop_count,
         "duplicate_demo_phone": DUPLICATE_DEMO_PHONE,
     }
 

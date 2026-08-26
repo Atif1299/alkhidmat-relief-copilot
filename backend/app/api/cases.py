@@ -31,6 +31,7 @@ def serialize_case(case: Case) -> dict:
         "matched_resource_id": case.matched_resource_id,
         "volunteer_id": case.volunteer_id,
         "agent_trace": case.agent_trace,
+        "sop_hits": case.sop_hits,
         "time_to_ticket_ms": case.time_to_ticket_ms,
         "created_at": case.created_at.isoformat() if case.created_at else None,
     }

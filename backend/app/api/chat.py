@@ -64,6 +64,7 @@ async def chat(body: ChatRequest):
                     "agent_trace": result.get("agent_trace"),
                     "notification": result.get("notification"),
                     "integrity": result.get("integrity"),
+                    "sop_hits": result.get("sop_hits"),
                 },
                 ensure_ascii=False,
             ),
@@ -89,4 +90,5 @@ async def chat_sync(body: ChatRequest):
         "agent_trace": result.get("agent_trace"),
         "notification": result.get("notification"),
         "integrity": result.get("integrity"),
+        "sop_hits": result.get("sop_hits"),
     }

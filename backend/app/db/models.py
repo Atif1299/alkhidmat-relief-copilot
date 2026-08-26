@@ -44,6 +44,7 @@ class Case(Base):
     )
 
     agent_trace: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    sop_hits: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
     time_to_ticket_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -95,3 +96,14 @@ class Volunteer(Base):
     skills: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
     area: Mapped[str] = mapped_column(String(128))
     available: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class SopChunk(Base):
+    __tablename__ = "sop_chunks"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    category: Mapped[str] = mapped_column(String(32), index=True)
+    title: Mapped[str] = mapped_column(String(256))
+    body: Mapped[str] = mapped_column(Text)
+    keywords: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    source_file: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)

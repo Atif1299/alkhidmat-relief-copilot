@@ -17,6 +17,7 @@ class CaseState(TypedDict, total=False):
     category: str
     priority: str
     integrity: dict[str, Any]
+    sop_hits: list[dict[str, Any]]
     matched_resources: list[dict[str, Any]]
     volunteer: Optional[dict[str, Any]]
     ticket_id: Optional[str]

@@ -1,4 +1,4 @@
-"""Alkhidmat Relief Copilot API — Tier A Aid Desk."""
+"""Alkhidmat Relief Copilot API — Tier B Aid Desk."""
 
 from contextlib import asynccontextmanager
 
@@ -21,8 +21,8 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(
     title="Alkhidmat Relief Copilot",
-    description="Multi-agent NGO aid desk — Intake → Triage → Integrity → Matcher → Dispatch",
-    version="0.1.0",
+    description="Multi-agent NGO aid desk — Intake → Triage → Knowledge → Integrity → Matcher → Dispatch",
+    version="0.2.0",
     lifespan=lifespan,
 )
 

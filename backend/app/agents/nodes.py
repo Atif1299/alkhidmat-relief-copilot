@@ -1,4 +1,4 @@
-"""LangGraph nodes: Intake → Triage → Integrity → HITL → Matcher → Dispatch."""
+"""LangGraph nodes: Intake → Triage → Knowledge → Integrity → HITL → Matcher → Dispatch."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from app.db.session import SessionLocal
 from app.services import llm as llm_service
 from app.services.audit import log_event
 from app.tools import cases as case_tools
+from app.tools import sops as sop_tools
 
 
 def _now_ms() -> int:
@@ -54,6 +55,47 @@ async def triage_node(state: CaseState) -> dict[str, Any]:
             )
         ],
     }
+
+
+async def knowledge_node(state: CaseState) -> dict[str, Any]:
+    db = SessionLocal()
+    try:
+        category = state.get("category") or "Other"
+        extracted = state.get("extracted") or {}
+        query = " ".join(
+            filter(
+                None,
+                [
+                    state.get("raw_message"),
+                    extracted.get("need_summary"),
+                    extracted.get("location"),
+                    category,
+                ],
+            )
+        )
+        hits = sop_tools.search_sops(db, category=category, query=query, limit=3)
+        titles = ", ".join(h["title"] for h in hits) if hits else "none"
+        log_event(
+            db,
+            case_id=state["case_id"],
+            actor="Knowledge",
+            event_type="sop_retrieved",
+            detail=titles,
+            payload={"sop_hits": hits},
+        )
+        return {
+            "sop_hits": hits,
+            "agent_trace": [
+                _step(
+                    "Knowledge",
+                    "sop_retrieved",
+                    f"Retrieved {len(hits)} SOP(s): {titles}",
+                    sop_hits=hits,
+                )
+            ],
+        }
+    finally:
+        db.close()
 
 
 async def integrity_node(state: CaseState) -> dict[str, Any]:
@@ -169,6 +211,7 @@ async def hitl_gate_node(state: CaseState) -> dict[str, Any]:
         "duplicate_flag": (state.get("integrity") or {}).get("duplicate_flag", False),
         "requires_hitl": True,
         "agent_trace": state.get("agent_trace") or [],
+        "sop_hits": state.get("sop_hits") or [],
     }
     db = SessionLocal()
     try:
@@ -207,6 +250,20 @@ async def matcher_node(state: CaseState) -> dict[str, Any]:
             matched = case_tools.list_resources(db, category=category)
         if not matched:
             matched = case_tools.list_resources(db)
+        # Light SOP hint: prefer names mentioned in retrieved SOP excerpts
+        sop_text = " ".join(
+            f"{h.get('title', '')} {h.get('excerpt', '')}".lower()
+            for h in (state.get("sop_hits") or [])
+        )
+        if sop_text and matched:
+            boosted = [
+                r
+                for r in matched
+                if any(token in sop_text for token in r["name"].lower().split() if len(token) > 3)
+            ]
+            if boosted:
+                rest = [r for r in matched if r not in boosted]
+                matched = boosted + rest
         matched = matched[:3]
         volunteer = case_tools.assign_volunteer(db, category=category, area=area)
         log_event(
@@ -254,6 +311,7 @@ async def dispatch_node(state: CaseState) -> dict[str, Any]:
             "hitl_note": state.get("hitl_note"),
             "matched_resource_id": matched[0]["id"] if matched else None,
             "volunteer_id": volunteer["id"] if volunteer else None,
+            "sop_hits": state.get("sop_hits") or [],
             "time_to_ticket_ms": elapsed,
         }
 

@@ -2,26 +2,23 @@
 
 from __future__ import annotations
 
-import pytest
-from fastapi.testclient import TestClient
+import uuid
 
 from app.db.seed import DUPLICATE_DEMO_PHONE
-from app.main import app
-
-client = TestClient(app)
 
 
-def test_health():
+def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200
     assert r.json()["status"] == "ok"
 
 
-def test_happy_path_food():
+def test_happy_path_food(client):
+    phone = f"0301{uuid.uuid4().hex[:7]}"
     r = client.post(
         "/api/v1/chat/sync",
         json={
-            "message": "Flood ke baad khane ki zaroorat hai, Township Lahore, family of 5. Phone 03013334445"
+            "message": f"Flood ke baad khane ki zaroorat hai, Township Lahore, family of 5. Phone {phone}"
         },
     )
     assert r.status_code == 200
@@ -30,10 +27,12 @@ def test_happy_path_food():
     assert data["category"] == "Food"
     assert data["ticket_id"]
     agents = [s["agent"] for s in data["agent_trace"]]
-    assert agents == ["Intake", "Triage", "Integrity", "Matcher", "Dispatch"]
+    assert agents == ["Intake", "Triage", "Knowledge", "Integrity", "Matcher", "Dispatch"]
+    assert data.get("sop_hits")
+    assert data["sop_hits"][0].get("title")
 
 
-def test_duplicate_phone_escalates():
+def test_duplicate_phone_escalates(client):
     r = client.post(
         "/api/v1/chat/sync",
         json={
@@ -47,10 +46,11 @@ def test_duplicate_phone_escalates():
     assert data["integrity"]["duplicate_flag"] is True
 
 
-def test_critical_hitl_then_approve():
+def test_critical_hitl_then_approve(client):
+    phone = f"0301{uuid.uuid4().hex[:7]}"
     r = client.post(
         "/api/v1/chat/sync",
-        json={"message": "Chest pain, need ambulance, Johar Town. Phone 03014445556"},
+        json={"message": f"Chest pain, need ambulance, Johar Town. Phone {phone}"},
     )
     assert r.status_code == 200
     data = r.json()
@@ -72,7 +72,7 @@ def test_critical_hitl_then_approve():
     assert body["ticket_id"]
 
 
-def test_metrics():
+def test_metrics(client):
     r = client.get("/api/v1/metrics")
     assert r.status_code == 200
     data = r.json()

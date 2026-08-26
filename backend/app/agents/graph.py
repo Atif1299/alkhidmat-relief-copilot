@@ -20,6 +20,7 @@ def build_graph():
     graph = StateGraph(CaseState)
     graph.add_node("intake", nodes.intake_node)
     graph.add_node("triage", nodes.triage_node)
+    graph.add_node("knowledge", nodes.knowledge_node)
     graph.add_node("integrity", nodes.integrity_node)
     graph.add_node("hitl_gate", nodes.hitl_gate_node)
     graph.add_node("matcher", nodes.matcher_node)
@@ -27,7 +28,8 @@ def build_graph():
 
     graph.add_edge(START, "intake")
     graph.add_edge("intake", "triage")
-    graph.add_edge("triage", "integrity")
+    graph.add_edge("triage", "knowledge")
+    graph.add_edge("knowledge", "integrity")
     graph.add_conditional_edges(
         "integrity",
         nodes.route_after_integrity,

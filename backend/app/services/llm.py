@@ -82,7 +82,8 @@ def mock_classify(extracted: dict[str, Any], _message: str) -> dict[str, Any]:
 async def call_qwen(system: str, user: str) -> str:
     if not settings.dashscope_api_key:
         raise RuntimeError("DASHSCOPE_API_KEY not set")
-    url = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions"
+    base = settings.dashscope_base_url.rstrip("/")
+    url = f"{base}/chat/completions"
     headers = {
         "Authorization": f"Bearer {settings.dashscope_api_key}",
         "Content-Type": "application/json",
