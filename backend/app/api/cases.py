@@ -1,11 +1,14 @@
-"""Cases list/detail API."""
+"""Cases list/detail/timeline/PDF API."""
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.db.models import Case
 from app.db.session import get_db
 from app.services.audit import list_events
+from app.services.pdf_export import build_case_pdf
+from app.services.timeline import build_timeline
 
 router = APIRouter(prefix="/api/v1/cases", tags=["cases"])
 
@@ -52,4 +55,37 @@ def get_case(case_id: str, db: Session = Depends(get_db)):
         raise HTTPException(404, "Case not found")
     data = serialize_case(case)
     data["events"] = list_events(db, case_id)
+    data["timeline"] = build_timeline(case, data["events"])
     return data
+
+
+@router.get("/{case_id}/timeline")
+def get_timeline(case_id: str, db: Session = Depends(get_db)):
+    case = db.query(Case).filter(Case.id == case_id).first()
+    if not case:
+        raise HTTPException(404, "Case not found")
+    events = list_events(db, case_id)
+    return {
+        "case_id": case_id,
+        "ticket_id": case.ticket_id,
+        "status": case.status,
+        "stages": build_timeline(case, events),
+        "events": events,
+    }
+
+
+@router.get("/{case_id}/export.pdf")
+def export_case_pdf(case_id: str, db: Session = Depends(get_db)):
+    case = db.query(Case).filter(Case.id == case_id).first()
+    if not case:
+        raise HTTPException(404, "Case not found")
+    data = serialize_case(case)
+    events = list_events(db, case_id)
+    timeline = build_timeline(case, events)
+    pdf_bytes = build_case_pdf(data, timeline=timeline, events=events)
+    filename = f"{case.ticket_id or case.id}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
