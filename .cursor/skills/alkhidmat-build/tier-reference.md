@@ -1,11 +1,11 @@
 # Tier Reference — synced with docs/PRODUCT_DEFINITION.md
 
-## Tier A (implement first)
+## Tier A (complete)
 
 | ID | Feature | Acceptance |
 |----|---------|------------|
 | A1 | Citizen chat Urdu+EN | Streaming agent trace |
-| A2 | LangGraph 6-agent pipeline | Integrity never skipped |
+| A2 | LangGraph pipeline | Integrity never skipped |
 | A3 | HITL supervisor | approve/reject resumes graph |
 | A4 | Duplicate detection | Same phone flagged |
 | A5 | Resource matching | Lahore seed by category |
@@ -15,20 +15,25 @@
 | A9 | Qwen/DashScope | real LLM with mock fallback |
 | A10 | Demo scenarios | 3 E2E tests pass |
 
-## Tier B (after Tier A green)
+## Tier B (in progress — after Tier A green)
 
-| ID | Feature |
-|----|---------|
-| B8 | Light RAG / SOP Knowledge agent (UI-visible retrieval) |
-| B9 | Role views: Requester / Desk / Supervisor |
-| B10 | Case timeline UI |
-| B11 | Richer Lahore district seed |
-| B12 | PDF case export |
+| ID | Feature | Acceptance |
+|----|---------|------------|
+| B8 | Light RAG / SOP Knowledge agent | Knowledge in agent_trace; citations in UI |
+| B9 | Role views | Switcher requester/desk/supervisor; nav gated |
+| B10 | Case timeline | `GET .../timeline` + `/cases/[id]` ladder |
+| B11 | Richer Lahore seed | ≥25 resources; SOP corpus indexed |
+| B12 | PDF case export | `GET .../export.pdf` returns PDF |
 
 ## Tier C (defer)
 
 WhatsApp prod, real Alkhidmat API, mobile apps, 10+ agents, billing, CNIC OCR main feature.
 
+## Graph (Tier B)
+
+`Intake → Triage → Knowledge → Integrity → Matcher → Dispatch` (+ HITL gate)
+
 ## Stack
 
-LangGraph + FastAPI + Next.js 14 + SQLite + Qwen. Repo: github.com/Atif1299/alkhidmat-relief-copilot
+LangGraph + FastAPI + Next.js 14 + SQLite + Qwen + reportlab.  
+Repo: github.com/Atif1299/alkhidmat-relief-copilot

@@ -8,9 +8,9 @@ alwaysApply: false
 
 ## Orchestration
 
-Use **LangGraph** only. Graph: `Intake → Triage → Integrity → Matcher → Dispatch`.
+Use **LangGraph** only. Graph: `Intake → Triage → Knowledge → Integrity → Matcher → Dispatch`.
 
-Never route Intake directly to Matcher — Integrity is mandatory.
+Never route Intake directly to Matcher — Integrity is mandatory. Knowledge runs after Triage.
 
 ## HITL
 
@@ -30,7 +30,7 @@ Implement as plain Python functions in `backend/app/tools/` — MCP-style contra
 
 ## Tier scope
 
-Implement **Tier A only** unless user explicitly requests Tier B and Tier A tests are green.
+Implement **Tier B** (Knowledge, timeline, PDF, roles, seed) without breaking Tier A E2E.
 
 ## Tests required
 

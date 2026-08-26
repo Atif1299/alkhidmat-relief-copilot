@@ -23,9 +23,9 @@ An **agentic operations desk** that turns Urdu/English aid requests into **verif
 
 ## Phase
 
-**Phase 1 — Build Tier A first**, then Tier B only after Tier A E2E passes.
+**Phase 2 — Tier B** (Tier A E2E green). Implement B8–B12 only; do not start Tier C.
 
-Trigger implementation: user says **"start build"** or names a plan todo.
+Trigger: Tier B plan execution or user names a Tier B todo.
 
 ## Stack (locked)
 
@@ -62,7 +62,7 @@ WhatsApp production, real Alkhidmat API, mobile apps, 10+ agents, billing, CNIC 
 
 ## Non-negotiable graph rule
 
-`Intake → Triage → Integrity → Matcher → Dispatch` — **never skip Integrity** on create.
+`Intake → Triage → Knowledge → Integrity → Matcher → Dispatch` — **never skip Integrity** on create.
 
 HITL gate when `critical` priority or high integrity risk.
 

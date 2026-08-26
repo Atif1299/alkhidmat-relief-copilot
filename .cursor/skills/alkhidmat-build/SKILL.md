@@ -2,9 +2,10 @@
 name: alkhidmat-build
 description: >-
   Implements Alkhidmat Relief Copilot Tier A then Tier B. LangGraph orchestrator,
-  FastAPI, Next.js 14, Qwen/DashScope, HITL supervisor, agent trace UI. Repo:
-  github.com/Atif1299/alkhidmat-relief-copilot. Use when user says "start build",
-  names a plan todo, or asks to implement agents, API, or UI.
+  FastAPI, Next.js 14, Qwen/DashScope, HITL supervisor, agent trace UI, Knowledge
+  RAG, roles, timeline, PDF. Repo: github.com/Atif1299/alkhidmat-relief-copilot.
+  Use when user says "start build", names a plan todo, or asks to implement agents,
+  API, or UI.
 ---
 
 # Alkhidmat Relief Copilot — Build Skill
@@ -12,8 +13,9 @@ description: >-
 ## Before coding
 
 1. Read `docs/PRODUCT_DEFINITION.md` — Tier A/B/C
-2. Read `AGENTS.md` — agent contracts
-3. **Tier A must be complete and tested before any Tier B work**
+2. Read `docs/ARCHITECTURE.md` — current graph
+3. Read `AGENTS.md` — agent contracts
+4. **Tier A must be complete and tested before any Tier B work** (Tier A is green)
 
 ## Repository
 
@@ -21,127 +23,102 @@ description: >-
 https://github.com/Atif1299/alkhidmat-relief-copilot.git
 ```
 
-Push `.cursor/` with the codebase. After each todo below: **commit + push**.
-
-## Monorepo layout
-
-```
-alkhidmat-relief-copilot/
-├── backend/app/          # FastAPI + LangGraph + tools
-├── frontend/app/         # Next.js 14 routes
-├── docs/
-└── .cursor/              # committed
-```
+Push `.cursor/` with the codebase. After each todo: **commit + push**.
 
 ## Stack
 
 | Layer | Choice |
 |-------|--------|
 | Orchestrator | LangGraph — NOT Hermes |
-| LLM | DashScope Qwen (`DASHSCOPE_API_KEY`); `LLM_MODE=mock` for offline |
+| LLM | DashScope Qwen; `LLM_MODE=mock` for offline |
+| Knowledge | SOP markdown → `sop_chunks` + keyword search |
 | API | FastAPI |
 | DB | SQLAlchemy + SQLite |
 | UI | Next.js 14 App Router |
+| PDF | reportlab |
 
-## LangGraph graph (Tier A)
+## LangGraph graph (Tier B)
 
 ```
-Intake → Triage → Integrity → Matcher → Dispatch
-              ↓ (critical OR high risk)
-         HITL interrupt → Supervisor approve/reject → resume or reject
+Intake → Triage → Knowledge → Integrity → Matcher → Dispatch
+                         ↓ (critical OR high risk)
+                    HITL interrupt → Supervisor approve/reject → resume or reject
 ```
 
-**CaseState fields:** `raw_message`, `language`, `extracted`, `category`, `priority`, `integrity`, `matched_resources`, `ticket_id`, `status`, `agent_trace`, `requires_hitl`, `hitl_decision`
+**CaseState:** Tier A fields + `sop_hits` (list of title/category/excerpt/score).
 
-**HITL:** `interrupt_before` dispatch when `requires_hitl=True`. Resume via supervisor API.
+**Non-negotiable:** Integrity never skipped. Knowledge after Triage, before Integrity.
 
-## Tier A checklist (ship all before Tier B)
+## Tier A checklist (complete)
 
-- [ ] A1 Citizen chat Urdu + EN with streaming trace
-- [ ] A2 Six-agent pipeline; Integrity never skipped
-- [ ] A3 HITL supervisor approve/reject
-- [ ] A4 Duplicate phone flagged (seed `03001234567`)
-- [ ] A5 Resource matching from Lahore seed
-- [ ] A6 Ticket lifecycle statuses
-- [ ] A7 Dashboard: cases today, avg time-to-ticket, % escalated
-- [ ] A8 Audit log on agent steps + supervisor decisions
-- [ ] A9 Qwen integration
-- [ ] A10 Three demo scenarios pass E2E tests
+- [x] A1–A10 (chat, pipeline, HITL, duplicate, matcher, lifecycle, dashboard, audit, Qwen, E2E)
 
-## Tier B (after Tier A green)
+## Tier B checklist
 
-From `docs/PRODUCT_DEFINITION.md`:
+- [ ] B8 Knowledge step + SOP citations in UI
+- [ ] B9 Role switcher: requester | desk | supervisor (localStorage)
+- [ ] B10 Case timeline API + `/cases/[id]` page
+- [ ] B11 ≥25 Lahore resources + SOP corpus
+- [ ] B12 PDF export endpoint + UI button
+- [ ] Tier A E2E still pass
 
-8. Light RAG / SOP Knowledge agent (show retrieval in UI)
-9. Role-based views (Requester / Desk / Supervisor)
-10. Case timeline (Requested → Matched → Dispatched → Closed)
-11. Richer Lahore district seed data
-12. Export case PDF/report
+## Tier B implementation todos (commit + push each)
 
-## Implementation todos (commit + push each)
+1. `docs: lock Tier B architecture and Cursor build guidance`
+2. `feat(seed): expand Lahore inventory and SOP corpus`
+3. `feat(agents): add Knowledge RAG node with SOP retrieval`
+4. `feat(api): add case timeline endpoint`
+5. `feat(api): add PDF case export`
+6. `feat(frontend): role views, case timeline, SOP citations, PDF export`
+7. `test: Tier B knowledge, timeline, and PDF coverage`
 
-1. `chore: initialize monorepo` — structure, README, .env.example
-2. `feat(backend): FastAPI skeleton, DB models, seed`
-3. `feat(backend): MCP-style tools + audit logger`
-4. `feat(agents): LangGraph pipeline mock LLM`
-5. `feat(agents): HITL gate + supervisor API`
-6. `feat(llm): DashScope Qwen + bilingual prompts`
-7. `feat(api): chat endpoint SSE agent trace`
-8. `feat(frontend): Next.js 14 shell`
-9. `feat(frontend): chat + AgentTrace UI`
-10. `feat(frontend): supervisor + tickets views`
-11. `feat(dashboard): metrics API + page`
-12. `test: E2E happy/duplicate/escalation`
-13. `docs: architecture + deploy guide`
-
-## Tools (backend/app/tools/)
+## Tools
 
 | Tool | Used by |
 |------|---------|
 | `search_similar_cases` | Integrity |
+| `search_sops` | Knowledge |
 | `list_resources` | Matcher |
 | `create_case` | Dispatch |
 | `assign_volunteer` | Dispatch |
 | `escalate_to_human` | Integrity |
 | `send_status_message` | Dispatch |
 
-## API (Tier A)
+## API
 
 | Endpoint | Purpose |
 |----------|---------|
-| POST `/api/v1/chat` | Submit message; SSE agent trace |
+| POST `/api/v1/chat` | SSE agent trace (+ Knowledge) |
 | GET `/api/v1/cases` | Ticket list |
-| GET `/api/v1/cases/{id}` | Detail + trace |
+| GET `/api/v1/cases/{id}` | Detail + events + sop_hits |
+| GET `/api/v1/cases/{id}/timeline` | Product timeline stages |
+| GET `/api/v1/cases/{id}/export.pdf` | PDF report |
 | GET `/api/v1/supervisor/queue` | Pending HITL |
 | POST `/api/v1/supervisor/{id}/decide` | approve/reject |
 | GET `/api/v1/metrics` | Dashboard stats |
 
-## Frontend routes (Tier A)
+## Frontend routes
 
-| Route | Purpose |
-|-------|---------|
-| `/chat` | Citizen demo + AgentTrace sidebar |
-| `/tickets` | Ops desk ticket list |
-| `/supervisor` | HITL queue |
-| `/dashboard` | Metrics for judges |
+| Route | Roles |
+|-------|-------|
+| `/chat` | requester, desk, supervisor |
+| `/tickets` | desk, supervisor |
+| `/cases/[id]` | desk, supervisor |
+| `/supervisor` | supervisor |
+| `/dashboard` | desk, supervisor |
 
-## Demo scenarios (must pass)
+## Demo scenarios
 
-1. Urdu food: `"Flood ke baad khane ki zaroorat hai, Township Lahore, family of 5"`
-2. Duplicate: same phone `03001234567` → flagged
-3. Critical: `"Chest pain, need ambulance, Johar Town"` → HITL → approve → ticket
+1. Urdu food → Knowledge SOP citation → Food ticket
+2. Duplicate phone `03001234567` → HITL
+3. Critical medical → HITL → approve → ticket
+4. Open case detail → timeline + Export PDF
+5. Flip role switcher (Requester hides Supervisor)
 
-## Alibaba Cloud
+## Do not
 
-- DashScope Qwen for all agent LLM calls
-- Document ECS/FC deploy in README
-- Qoder: dev environment when access arrives
-
-## Do not (Tier A)
-
-- Hermes Agent as orchestrator
-- Skip Integrity node
-- Skip HITL or Urdu path
-- Tier B features before Tier A tests pass
-- Real Alkhidmat API
-- WhatsApp production
+- Hermes as orchestrator
+- Skip Integrity or Knowledge on create path
+- JWT/OAuth (use demo role switcher)
+- Vector DB / Tier C features
+- Break Tier A E2E paths
