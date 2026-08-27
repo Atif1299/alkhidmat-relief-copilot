@@ -132,11 +132,12 @@ Paste or summarize each email below. Mentor will update `EVALUATION_CRITERIA.md`
 
 ## Still waiting on (from organizers)
 
-- [ ] Submission format, contents, deadline  
-- [ ] Official evaluation rubric / prize categories  
-- [ ] Regional round schedule + Lahore venue/date  
-- [ ] Required Alibaba Cloud products beyond Qoder  
-- [ ] Discord announcements (mirror of email)
+- [x] **Qoder Teams invite** (received 26 Aug — code `235521`; expires 27 Aug 11:20 UTC)
+- [ ] Confirm Enterprise/Credits active after joining org
+- [ ] Submission portal + format + deadline (during build, before/by 4 Sep)
+- [ ] Full regional evaluation rubric details
+- [ ] Regional round date/time/venue (Lahore)
+- [ ] Discord re-access notice (if still needed)
 
 ---
 
@@ -253,3 +254,61 @@ https://resource.alibabacloud.com/activity/webinar/detail.html?id=LS20260010
 - [x] PDF ingested  
 - [ ] Watch Session 1 recording for **assessment criteria** (user partially attended)  
 - [ ] Watch Session 2 for Skills/MCP implementation patterns
+
+---
+
+### Email 9 — Updated programme timeline — Sun 23 Aug 2026, 14:35
+
+**From / event:** aihackathon@banoqabil.pk  
+
+**Why:** Build phase extended after participant feedback (need more time to build properly).
+
+**Updated timeline:**
+
+| Dates | Phase |
+|-------|-------|
+| **24–25 Aug** | Qoder dispatch (after acknowledgement); current position under Alibaba Cloud evaluation criteria shared |
+| **To 4 September** | Build phase continues (online) |
+| During build | Submission portal + access details shared separately |
+| **After 4 Sep** | Regional technical evaluation phase |
+| Regional events | Date/time/venue TBA separately |
+
+**Requirements:**  
+- Watch for separate acknowledgement email before Qoder dispatch  
+- Discord access available from 24 Aug for those who couldn't join earlier  
+
+**Mentor notes:** Old regional dates (28–30 Aug) superseded. Build window now ~2 weeks to 4 Sep. Regional is **technical evaluation** focus.
+
+---
+
+### Email 10 — Tools access acknowledgement — Sun 23 Aug 2026, 20:41
+
+**From / event:** aihackathon@banoqabil.pk  
+
+**Deadline:** Acknowledge by **24 Aug 2026, 17:00 PKT** — access cannot dispatch without it.  
+**Form:** https://forms.gle/rxdWSej496y7HtT5A  
+
+**Your position (Qualification Round):**  
+- **Grade 1** — met every threshold at first assessment across Qualification Stage dimensions  
+- **Tools:** Qoder **Enterprise Plan** + **special Credits** for build phase  
+- Licence issued to registered email; notify before issue  
+
+**What is assessed (regional):**  
+- Strength of **technical implementation**  
+- Tooling supports work; **does not determine outcome**  
+
+**Conditions before licence:**  
+1. Qualification Round position (Grade 1)  
+2. **Training attendance verified** (forms were open until 23:59 PKT on each session day)  
+
+**Responsible use:** No illegal use, malware, fraud, mining, spam, unrelated commercial work, account sharing, wasteful credits. Organizer may monitor/revoke/disqualify.
+
+**Critical:** Do **not** create Qoder account on registered email — licence cannot apply if account already exists.
+
+**Action items:**  
+- [x] **Acknowledgement form submitted** (24 Aug ~23:00 PKT — past 17:00 but form accepted)  
+- [ ] Confirm training attendance was submitted for both sessions  
+- [x] **Qoder invite received** (26 Aug) — org Pakistan Hackathon Program; code `235521`  
+- [ ] Accept invite with `ranaatif1299@gmail.com` + enter code **before 27 Aug 11:20 UTC**  
+- [ ] Install **Qoder IDE Windows X64 (User)** only
+- [x] **Qoder Teams invite received** (26 Aug) — org: Pakistan Hackathon Program; code `235521`; expires **27 Aug 2026 11:20 UTC**
