@@ -4,7 +4,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Target** | **GCP** project `x-saas` — Cloud Run + Cloud SQL |
+| **Target** | **GCP** project `x-saas-488416` — Cloud Run + Cloud SQL |
 | **Region** | `asia-south1` |
 | **Stack** | `relief-web` (Next.js) + `relief-api` (FastAPI) + Cloud SQL Postgres |
 | **LLM** | Alibaba **DashScope / Qwen** (not hosted on GCP) |
@@ -59,14 +59,14 @@ Never paste GCP passwords or full API keys into chat.
 
 | Step | Action | Return to deploy chat |
 |------|--------|------------------------|
-| 1 | `gcloud auth login` + `gcloud config set project x-saas` | Confirm project `x-saas` |
-| 2 | [Console](https://console.cloud.google.com/) → Billing on `x-saas` | “Billing enabled” |
+| 1 | `gcloud auth login` + `gcloud config set project x-saas-488416` | Confirm project `x-saas-488416` |
+| 2 | [Console](https://console.cloud.google.com/) → Billing on `x-saas-488416` | “Billing enabled” |
 | 3 | Create secret (local terminal, not chat): see below | “Secret created” |
 
 ### Create DashScope secret (run locally)
 
 ```bash
-gcloud config set project x-saas
+gcloud config set project x-saas-488416
 # Pipe key from your local backend/.env — do not paste into Cursor chat
 # Example: echo -n "YOUR_KEY" | gcloud secrets create dashscope-api-key --data-file=-
 ```
@@ -112,7 +112,7 @@ Local Compose still uses SQLite `checkpoints.db`.
 ## Redeploy (after code push)
 
 ```bash
-# From repo root, project x-saas, region asia-south1
+# From repo root, project x-saas-488416, region asia-south1
 bash deploy/gcp/03_build_and_deploy.sh
 ```
 

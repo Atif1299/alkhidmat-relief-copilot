@@ -13,5 +13,5 @@ steps:
 images:
   - ${_IMG_WEB}
 substitutions:
-  _IMG_WEB: asia-south1-docker.pkg.dev/x-saas/relief/web:latest
+  _IMG_WEB: asia-south1-docker.pkg.dev/x-saas-488416/relief/web:latest
   _API_URL: https://example.invalid

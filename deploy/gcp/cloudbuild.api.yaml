@@ -6,4 +6,4 @@ steps:
 images:
   - ${_IMG_API}
 substitutions:
-  _IMG_API: asia-south1-docker.pkg.dev/x-saas/relief/api:latest
+  _IMG_API: asia-south1-docker.pkg.dev/x-saas-488416/relief/api:latest

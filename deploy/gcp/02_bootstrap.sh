@@ -5,7 +5,7 @@
 #   echo -n "KEY" | gcloud secrets create dashscope-api-key --data-file=-
 set -euo pipefail
 
-PROJECT="${GCP_PROJECT:-x-saas}"
+PROJECT="${GCP_PROJECT:-x-saas-488416}"
 REGION="${GCP_REGION:-asia-south1}"
 AR_REPO="${AR_REPO:-relief}"
 SQL_INSTANCE="${SQL_INSTANCE:-relief-pg}"

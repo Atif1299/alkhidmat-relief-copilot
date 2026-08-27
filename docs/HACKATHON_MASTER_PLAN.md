@@ -66,7 +66,7 @@ Use time for a solid Tier A MVP, then polish — do not invent scope.
 | 26 Aug – 31 Aug | HITL, Urdu, duplicate/critical paths, agent trace |
 | 1–3 Sep | Dashboard, **GCP Cloud Run deploy**, demo rehearsal |
 
-**Deploy decision (27 Aug):** Alibaba ECS free trial blocked → live app on **GCP `x-saas` Cloud Run**; LLM remains **DashScope**. See `docs/DEPLOYMENT.md`.
+**Deploy decision (27 Aug):** Alibaba ECS free trial blocked → live app on **GCP `x-saas-488416` Cloud Run**; LLM remains **DashScope**. See `docs/DEPLOYMENT.md`.
 | 4 Sep | Submission portal (when shared) |
 
 ---

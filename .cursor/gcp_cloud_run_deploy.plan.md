@@ -6,7 +6,7 @@ Canonical execution plan for live hosting. Full detail also in Cursor plan histo
 
 | Item | Value |
 |------|--------|
-| Project | `x-saas` |
+| Project | `x-saas-488416` |
 | Region | `asia-south1` |
 | Hosting | Cloud Run `relief-api` + `relief-web` |
 | DB | Cloud SQL Postgres `relief-pg` / DB `aiddesk` |

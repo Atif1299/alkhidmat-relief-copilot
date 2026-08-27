@@ -15,7 +15,7 @@ NGO **Aid Desk SaaS** module: messy Urdu/English aid request → verified, resou
 | UI | Next.js 14 App Router (demo role switcher) |
 | DB | SQLite locally; **Cloud SQL Postgres** on GCP |
 | PDF | reportlab |
-| Deploy | **GCP Cloud Run** (project `x-saas`) — see [DEPLOYMENT.md](DEPLOYMENT.md) |
+| Deploy | **GCP Cloud Run** (project `x-saas-488416`) — see [DEPLOYMENT.md](DEPLOYMENT.md) |
 
 ## Graph (Tier B)
 
@@ -72,6 +72,6 @@ See root [README.md](../README.md). Optional: `docker compose up` (SQLite + ngin
 
 **Source of truth:** [DEPLOYMENT.md](DEPLOYMENT.md)
 
-1. GCP project `x-saas`, region `asia-south1`.
+1. GCP project `x-saas-488416`, region `asia-south1`.
 2. `bash deploy/gcp/03_build_and_deploy.sh` (after bootstrap).
 3. Web build-arg `NEXT_PUBLIC_API_URL` = API Cloud Run URL; API `CORS_ORIGINS` = web origin.

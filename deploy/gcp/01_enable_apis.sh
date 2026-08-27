@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Enable GCP APIs for Alkhidmat Relief Copilot deploy.
 set -euo pipefail
-PROJECT="${GCP_PROJECT:-x-saas}"
+PROJECT="${GCP_PROJECT:-x-saas-488416}"
 gcloud config set project "$PROJECT"
 gcloud services enable \
   run.googleapis.com \

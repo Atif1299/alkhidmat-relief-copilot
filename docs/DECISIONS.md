@@ -97,7 +97,7 @@
 ### 2026-08-27 — Host on GCP Cloud Run; Alibaba ECS blocked
 
 **Context:** Alibaba ECS free trial not eligible; paid Subscription ECS avoided. Product already has Dockerfiles + Compose for ECS. User has paid GCP project `x-saas` and wants Cloud Run for API + frontend.  
-**Decision:** **Live hosting = GCP** (`asia-south1`): Cloud Run `relief-api` + `relief-web`, Artifact Registry, Cloud SQL Postgres, Secret Manager for DashScope. **LLM stays Alibaba DashScope.** Remove ECS-only helpers (nginx/ssh/ECS_SETUP). Local Compose+SQLite remains for laptop only. Pitch: LLM on Alibaba; app on Cloud Run.  
+**Decision:** **Live hosting = GCP** (`asia-south1`, project `x-saas-488416`): Cloud Run `relief-api` + `relief-web`, Artifact Registry, Cloud SQL Postgres, Secret Manager for DashScope. **LLM stays Alibaba DashScope.** Remove ECS-only helpers (nginx/ssh/ECS_SETUP). Local Compose+SQLite remains for laptop only. Pitch: LLM on Alibaba; app on Cloud Run.  
 **Alternatives considered:** Pay Alibaba ECS; Vercel+Railway; GCP Compute Engine VM.  
 **Judge impact:** Live HTTPS URL + working Qwen path > blocked Alibaba VM.  
 **Status:** accepted
