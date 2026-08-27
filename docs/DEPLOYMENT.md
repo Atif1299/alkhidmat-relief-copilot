@@ -8,8 +8,8 @@
 | **Region** | `asia-south1` |
 | **Stack** | `relief-web` (Next.js) + `relief-api` (FastAPI) + Cloud SQL Postgres |
 | **LLM** | Alibaba **DashScope / Qwen** (not hosted on GCP) |
-| **Live API URL** | *Pending — set after first Cloud Run deploy* |
-| **Live Web URL** | *Pending — set after first Cloud Run deploy* |
+| **Live API URL** | https://relief-api-4idrhaffca-el.a.run.app |
+| **Live Web URL** | https://relief-web-4idrhaffca-el.a.run.app |
 | **Repo** | https://github.com/Atif1299/alkhidmat-relief-copilot |
 
 ---
@@ -93,7 +93,7 @@ gcloud config set project x-saas-488416
 | `LLM_MODE` | `qwen` |
 | `DASHSCOPE_API_KEY` | from Secret Manager |
 | `DASHSCOPE_MODEL` | `qwen-plus` (or your Model Studio model) |
-| `DASHSCOPE_BASE_URL` | working intl/Beijing compatible-mode URL |
+| `DASHSCOPE_BASE_URL` | Beijing MaaS compatible-mode (working): `https://ws-3fcwag66tpemo42e.cn-beijing.maas.aliyuncs.com/compatible-mode/v1` — **not** intl (401) |
 | `DATABASE_URL` | Postgres via Cloud SQL socket (set by deploy script) |
 | `CORS_ORIGINS` | Web Cloud Run origin |
 | `PORT` | Injected by Cloud Run |
@@ -111,32 +111,42 @@ Local Compose still uses SQLite `checkpoints.db`.
 
 ## Redeploy (after code push)
 
+**Full (api + web + CORS refresh):**
+
 ```bash
-# From repo root, project x-saas-488416, region asia-south1
+# Git Bash / WSL from repo root
+export DASHSCOPE_BASE_URL='https://ws-3fcwag66tpemo42e.cn-beijing.maas.aliyuncs.com/compatible-mode/v1'
 bash deploy/gcp/03_build_and_deploy.sh
 ```
 
-Or rebuild only api/web as documented in the script comments.
+**API only (PowerShell):**
 
-**Feature chats:** after changing API contracts or env names, update this file and redeploy both services if `NEXT_PUBLIC_API_URL` or CORS must change.
+```powershell
+gcloud builds submit backend --tag asia-south1-docker.pkg.dev/x-saas-488416/relief/api:latest
+gcloud run deploy relief-api --image asia-south1-docker.pkg.dev/x-saas-488416/relief/api:latest --region asia-south1
+```
+
+**Web only:** rebuild after API URL known — `gcloud builds submit` with `deploy/gcp/cloudbuild.web.yaml`, then `gcloud run deploy relief-web …`.
+
+**Feature chats:** after changing API contracts or env names, update this file and redeploy both services if `NEXT_PUBLIC_API_URL` or CORS must change. Do **not** reset `DASHSCOPE_BASE_URL` to intl.
 
 ---
 
 ## Smoke checklist
 
 ```bash
-curl -s https://API_URL/health
+curl -s https://relief-api-4idrhaffca-el.a.run.app/health
 # expect: "tier":"B"
 ```
 
-Browser on **Web URL**:
+Browser on **https://relief-web-4idrhaffca-el.a.run.app**:
 
 1. `/chat` — Urdu food → Knowledge citations + ticket  
-2. Duplicate `03001234567` → Supervisor → Approve  
-3. Case detail → timeline + Export PDF  
+2. Duplicate `03001234567` / critical medical → Supervisor → Approve  
+3. Case detail → timeline + Export PDF (`/api/v1/cases/{id}/export.pdf`)  
 4. Role switcher  
 
-Then set **Live API URL** / **Live Web URL** at the top of this file and commit.
+**Smoke results (2026-08-27):** food chat → ticket `AKD-20260827-07B1CE`; critical → `pending_hitl` in queue; timeline + PDF 200.
 
 ---
 

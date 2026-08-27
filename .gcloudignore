@@ -1,0 +1,11 @@
+# Root submit (web build): ignore heavy / secret paths
+backend/.venv/
+backend/data/
+backend/.env
+frontend/node_modules/
+frontend/.next/
+.git/
+.qoder/
+**/.env
+**/.env.local
+**/__pycache__/

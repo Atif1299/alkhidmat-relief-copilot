@@ -28,6 +28,21 @@ async def intake_node(state: CaseState) -> dict[str, Any]:
     case_id = state.get("case_id") or str(uuid.uuid4())
     extracted = await llm_service.extract_with_llm(message)
     language = extracted.get("language") or "en"
+    db = SessionLocal()
+    try:
+        case_tools.ensure_draft_case(
+            db,
+            case_id=case_id,
+            raw_message=message,
+            language=language,
+            requester_name=extracted.get("requester_name"),
+            requester_phone=extracted.get("requester_phone"),
+            location=extracted.get("location"),
+            need_summary=extracted.get("need_summary"),
+            status="processing",
+        )
+    finally:
+        db.close()
     return {
         "case_id": case_id,
         "language": language,

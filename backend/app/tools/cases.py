@@ -76,9 +76,31 @@ def list_resources(
     ]
 
 
+def ensure_draft_case(
+    db: Session,
+    *,
+    case_id: str,
+    raw_message: str,
+    **fields: Any,
+) -> dict[str, Any]:
+    """Insert a processing row early so case_events FK works on Postgres."""
+    existing = db.query(Case).filter(Case.id == case_id).first()
+    if existing:
+        return {"id": existing.id, "ticket_id": existing.ticket_id, "status": existing.status}
+    return create_case(
+        db,
+        case_id=case_id,
+        raw_message=raw_message,
+        status=fields.get("status", "processing"),
+        actor_for_create="Intake",
+        **{k: v for k, v in fields.items() if k != "status"},
+    )
+
+
 def create_case(db: Session, *, case_id: str, raw_message: str, **fields: Any) -> dict[str, Any]:
     status = fields.get("status", "processing")
     ticket_id = fields.get("ticket_id")
+    actor_for_create = fields.pop("actor_for_create", "Dispatch")
     if not ticket_id and status in ("open", "dispatched"):
         ticket_id = f"AKD-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
         fields["ticket_id"] = ticket_id
@@ -91,7 +113,7 @@ def create_case(db: Session, *, case_id: str, raw_message: str, **fields: Any) -
     log_event(
         db,
         case_id=case.id,
-        actor="Dispatch",
+        actor=actor_for_create,
         event_type="case_created",
         detail=f"status={case.status} ticket={case.ticket_id}",
     )

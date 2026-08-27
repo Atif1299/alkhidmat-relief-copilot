@@ -10,7 +10,7 @@ DB_NAME="${DB_NAME:-aiddesk}"
 DB_USER="${DB_USER:-aiddesk}"
 SERVICE_API="${SERVICE_API:-relief-api}"
 SERVICE_WEB="${SERVICE_WEB:-relief-web}"
-DASHSCOPE_BASE_URL="${DASHSCOPE_BASE_URL:-https://dashscope-intl.aliyuncs.com/compatible-mode/v1}"
+DASHSCOPE_BASE_URL="${DASHSCOPE_BASE_URL:-https://ws-3fcwag66tpemo42e.cn-beijing.maas.aliyuncs.com/compatible-mode/v1}"
 DASHSCOPE_MODEL="${DASHSCOPE_MODEL:-qwen-plus}"
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
