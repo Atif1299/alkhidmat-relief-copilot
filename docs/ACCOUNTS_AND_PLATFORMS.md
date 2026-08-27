@@ -1,6 +1,6 @@
 # Accounts & Platforms — Hackathon Checklist
 
-**Source:** Emails 1–8 + `ABC_AIH_Training_and_Programme_Schedule.pdf`
+**Source:** Emails 1–10 + `ABC_AIH_Training_and_Programme_Schedule.pdf`
 
 ---
 
@@ -9,7 +9,7 @@
 | # | Account / access | Email to use | Status | Why |
 |---|------------------|--------------|--------|-----|
 | 1 | **Hackathon participation email** | `ranaatif1299@gmail.com` | You have it | Primary channel; matched to project + attendance |
-| 2 | **Qoder** (provided access) | **Same participation email only** | Check inbox 21 Aug | Official build IDE — do NOT self-register this email before access email |
+| 2 | **Qoder Teams (Pakistan Hackathon Program)** | **`ranaatif1299@gmail.com`** | Invite received 26 Aug — code `235521`; expires **27 Aug 11:20 UTC** | Accept invite + install **Qoder IDE (Windows)** |
 | 3 | **Discord** (hackathon server) | Any Discord account | Join + set display name | Mirrors announcements; mentors may post here |
 | 4 | **Training attendance forms** | Participation email | Submit 19 + 20 Aug forms | Required attendance for both sessions |
 | 5 | **Optional: personal email** | Different from #1 | Only if exploring Qoder early | Keeps participation email free for provisioning |
@@ -86,9 +86,9 @@ From Session 2: *"Skills, MCP, Plug-ins, Cost optimisation, Demos on application
 
 | Decision | Recommendation | Reason |
 |----------|----------------|--------|
-| Primary IDE | **Qoder** for hackathon work | Sponsor-provided; training aligned |
-| Secondary IDE | Cursor OK for planning/docs | Our skills/rules already here |
-| LLM | **Qwen via Qoder / DashScope** | Alibaba Cloud partnership |
+| Primary IDE | **Cursor** for day-to-day build | Faster for you; regional grades **technical implementation** |
+| Qoder IDE | Keep installed + org joined; use lightly | Grade 1 credits + judge story (Skills/MCP) — not mandatory for every commit |
+| LLM | **Qwen via DashScope** (+ Qoder models if used) | Alibaba Cloud partnership |
 | Architecture | Multi-agent + tools + HITL | Matches Skills/MCP training |
 | RAG | **Defer** until rubric says otherwise | Time + demo focus |
 | Deploy | Working URL by 27 Aug | Regional live demo |
