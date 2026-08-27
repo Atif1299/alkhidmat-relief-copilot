@@ -93,3 +93,12 @@
 **Alternatives considered:** Hermes; full embeddings/vector DB; real OAuth roles.  
 **Judge impact:** Visible SOPs + ops timeline + PDF = industry-usable Aid Desk, not chatbot.  
 **Status:** accepted
+
+### 2026-08-27 — Live deploy: Alibaba ECS + Docker Compose + SQLite
+
+**Context:** Tier A+B product ready; need public URL for judges; Alibaba is hackathon sponsor stack.  
+**Decision:** Deploy on **one ECS** with `docker compose` (nginx + FastAPI + Next.js). SQLite + LangGraph `AsyncSqliteSaver` on named volume `relief_data`. Same-origin `/api` via nginx (`NEXT_PUBLIC_API_URL=""`). No vector DB / RDS / GCP in this cut.  
+**Alternatives considered:** Vercel+Railway primary; Function Compute only; full Kubernetes.  
+**Next (logged):** HTTPS+domain → RDS Postgres → CI deploy → optional embeddings RAG.  
+**Contract:** [docs/DEPLOYMENT.md](DEPLOYMENT.md) — all feature chats must follow it.  
+**Status:** accepted (bring-up pending public IP from user)

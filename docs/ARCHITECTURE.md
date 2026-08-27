@@ -8,13 +8,14 @@ NGO **Aid Desk SaaS** module: messy Urdu/English aid request → verified, resou
 
 | Layer | Choice |
 |-------|--------|
-| Orchestration | LangGraph (MemorySaver checkpointer for HITL resume) |
+| Orchestration | LangGraph (**AsyncSqliteSaver** on disk for durable HITL) |
 | LLM | DashScope Qwen (`LLM_MODE=qwen`) or deterministic mock |
 | Knowledge | File SOPs → `sop_chunks` SQLite + keyword retrieval |
 | API | FastAPI + SSE |
 | UI | Next.js 14 App Router (demo role switcher) |
 | DB | SQLite via SQLAlchemy |
 | PDF | reportlab |
+| Deploy | Alibaba ECS + Docker Compose (nginx) — see [DEPLOYMENT.md](DEPLOYMENT.md) |
 
 ## Graph (Tier B)
 
@@ -56,16 +57,19 @@ START → Intake → Triage → Knowledge → Integrity
 |---------|------|
 | DashScope / Qwen | Agent LLM |
 | Qoder | Official hackathon IDE / Skills-MCP narrative |
-| ECS / Function Compute | API deploy target |
+| **ECS** | Live product (Compose: nginx + API + Next) |
 | OSS | Future doc upload (stretch) |
+| RDS Postgres | Next after live URL stable |
 
 ## Run locally
 
 See root [README.md](../README.md).
 
-## Deploy notes
+## Deploy
 
-1. Set `DASHSCOPE_API_KEY` and `LLM_MODE=qwen` for live Alibaba LLM.
-2. Host API on ECS/FC; set `CORS_ORIGINS` to frontend origin.
-3. Host frontend on Vercel or static host; set `NEXT_PUBLIC_API_URL`.
-4. Persist SQLite volume or migrate `DATABASE_URL` to Postgres when ready.
+**Source of truth:** [DEPLOYMENT.md](DEPLOYMENT.md)
+
+1. `docker compose up -d --build` on ECS with `.env` from `.env.production.example`.
+2. Same-origin UI (`NEXT_PUBLIC_API_URL=""`); nginx proxies `/api` and `/health`.
+3. Persist volume `relief_data` (cases + HITL checkpoints).
+4. Next: HTTPS domain → RDS → CI.
