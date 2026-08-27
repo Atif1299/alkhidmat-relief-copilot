@@ -1,0 +1,17 @@
+# Cloud Build for Next.js web image with API URL bake-in
+# Submit from repo ROOT: gcloud builds submit . --config deploy/gcp/cloudbuild.web.yaml
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_IMG_WEB}
+      - --build-arg
+      - NEXT_PUBLIC_API_URL=${_API_URL}
+      - .
+    dir: frontend
+images:
+  - ${_IMG_WEB}
+substitutions:
+  _IMG_WEB: asia-south1-docker.pkg.dev/x-saas/relief/web:latest
+  _API_URL: https://example.invalid

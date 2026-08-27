@@ -4,155 +4,145 @@
 
 | Field | Value |
 |-------|--------|
-| **Target** | Alibaba Cloud **ECS** + Docker Compose |
-| **Stack** | nginx → Next.js + FastAPI; SQLite + LangGraph checkpoints on volume |
-| **Live URL** | *Pending — set after ECS public IP is known* |
+| **Target** | **GCP** project `x-saas` — Cloud Run + Cloud SQL |
+| **Region** | `asia-south1` |
+| **Stack** | `relief-web` (Next.js) + `relief-api` (FastAPI) + Cloud SQL Postgres |
+| **LLM** | Alibaba **DashScope / Qwen** (not hosted on GCP) |
+| **Live API URL** | *Pending — set after first Cloud Run deploy* |
+| **Live Web URL** | *Pending — set after first Cloud Run deploy* |
 | **Repo** | https://github.com/Atif1299/alkhidmat-relief-copilot |
+
+---
+
+## Why not Alibaba ECS
+
+Alibaba **ECS free trial was not eligible**; paid Subscription ECS was skipped.  
+**Hosting = GCP.** **Brain (LLM) = Alibaba DashScope.**  
+Pitch: *“LLM on Alibaba DashScope; app on Google Cloud Run.”*
+
+Active plan copy: [.cursor/gcp_cloud_run_deploy.plan.md](../.cursor/gcp_cloud_run_deploy.plan.md)
+
+---
+
+## GCP services (this deploy)
+
+| Service | Resource name | Purpose |
+|---------|---------------|---------|
+| Cloud Run | `relief-api` | FastAPI + LangGraph + SSE |
+| Cloud Run | `relief-web` | Next.js UI |
+| Artifact Registry | `relief` | Docker images |
+| Cloud SQL | `relief-pg` | Postgres DB `aiddesk` |
+| Secret Manager | `dashscope-api-key`, `db-password` | Secrets |
+| Cloud Build | builds | Build/push images |
+
+**Local only:** [docker-compose.yml](../docker-compose.yml) still runs nginx + SQLite for laptop demos — **not** used on GCP.
 
 ---
 
 ## Architecture (live)
 
 ```
-Browser  →  http://PUBLIC_IP
-              nginx :80
-                ├── /api/* , /health  →  api:8000 (FastAPI)
-                └── /*                →  web:3000 (Next.js)
-              volume relief_data
-                ├── relief.db
-                └── checkpoints.db   (durable HITL)
-              DashScope Qwen (outbound HTTPS)
+Browser  →  https://relief-web-….run.app
+              Next.js (NEXT_PUBLIC_API_URL → api)
+         →  https://relief-api-….run.app
+              FastAPI
+                ├── Secret Manager (DashScope key)
+                ├── Cloud SQL Postgres (cases + HITL checkpoints)
+                └── outbound HTTPS → DashScope Qwen
 ```
 
-**Same-origin:** Frontend is built with `NEXT_PUBLIC_API_URL=""` so the browser calls `/api/v1/...` on the same host. Do not point the production UI at `localhost:8000`.
+---
+
+## What you authenticate
+
+Never paste GCP passwords or full API keys into chat.
+
+| Step | Action | Return to deploy chat |
+|------|--------|------------------------|
+| 1 | `gcloud auth login` + `gcloud config set project x-saas` | Confirm project `x-saas` |
+| 2 | [Console](https://console.cloud.google.com/) → Billing on `x-saas` | “Billing enabled” |
+| 3 | Create secret (local terminal, not chat): see below | “Secret created” |
+
+### Create DashScope secret (run locally)
+
+```bash
+gcloud config set project x-saas
+# Pipe key from your local backend/.env — do not paste into Cursor chat
+# Example: echo -n "YOUR_KEY" | gcloud secrets create dashscope-api-key --data-file=-
+```
 
 ---
 
-## What you authenticate (browser only)
-
-Never paste Alibaba passwords or full API keys into chat.
-
-| Step | Console | Return to deploy chat |
-|------|---------|------------------------|
-| 1 | https://www.alibabacloud.com/ — sign in / register | “Account ready” + **region** (prefer `ap-southeast-1` Singapore) |
-| 2 | ECS → Create Instance | **Public IP**, instance ID, SSH username (`root` or `ubuntu`) |
-| 3 | Security group | Ports **22**, **80** open (443 later for HTTPS) |
-| 4 | SSH from your PC | Confirm login works |
-| 5 | Server `.env` | Set `DASHSCOPE_API_KEY` on the VM only |
-
-### ECS create checklist
-
-- Image: **Ubuntu 22.04**
-- Spec: **2 vCPU / 4 GiB** (minimum comfortable for Next + API)
-- Network: assign **public IPv4**
-- Security group inbound: TCP 22, 80 (and 443 when you add TLS)
-
----
-
-## Local / server files
+## Scripts
 
 | Path | Role |
 |------|------|
-| [docker-compose.yml](../docker-compose.yml) | `api` + `web` + `nginx` |
-| [backend/Dockerfile](../backend/Dockerfile) | FastAPI image |
-| [frontend/Dockerfile](../frontend/Dockerfile) | Next.js image |
-| [deploy/nginx.conf](../deploy/nginx.conf) | Reverse proxy + SSE timeouts |
-| [deploy/ssh-up.sh](../deploy/ssh-up.sh) | `compose up --build` helper |
-| [.env.production.example](../.env.production.example) | Env template (copy to `.env` on server) |
+| [deploy/gcp/01_enable_apis.sh](../deploy/gcp/01_enable_apis.sh) | Enable GCP APIs |
+| [deploy/gcp/02_bootstrap.sh](../deploy/gcp/02_bootstrap.sh) | Artifact Registry + Cloud SQL + secrets stubs |
+| [deploy/gcp/03_build_and_deploy.sh](../deploy/gcp/03_build_and_deploy.sh) | Build images + deploy Cloud Run |
+| [backend/Dockerfile](../backend/Dockerfile) | API image (`$PORT`) |
+| [frontend/Dockerfile](../frontend/Dockerfile) | Web image (`$PORT`, build-arg API URL) |
+| [.env.production.example](../.env.production.example) | Env template |
 
 ---
 
-## Bring-up on ECS (after you have public IP)
+## Environment (Cloud Run api)
 
-SSH in, then:
-
-```bash
-# Docker (Ubuntu)
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl git
-curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker $USER
-# log out/in if needed
-
-git clone https://github.com/Atif1299/alkhidmat-relief-copilot.git
-cd alkhidmat-relief-copilot
-cp .env.production.example .env
-nano .env   # set DASHSCOPE_API_KEY, LLM_MODE=qwen, keep CORS_ORIGINS=*
-
-chmod +x deploy/ssh-up.sh
-./deploy/ssh-up.sh
-# or: docker compose up -d --build
-```
-
-### Smoke checklist
-
-```bash
-curl -s http://127.0.0.1/health
-# expect: "tier":"B"
-
-# From your laptop:
-curl -s http://PUBLIC_IP/health
-```
-
-Browser:
-
-1. `http://PUBLIC_IP/chat` — Urdu food path → Knowledge citations + ticket  
-2. Duplicate phone `03001234567` → Supervisor → Approve (restart API container mid-wait should still resume)  
-3. Case detail → timeline + Export PDF  
-4. Role switcher still works  
-
-Then update **Live URL** at the top of this file and commit.
-
-### Redeploy after code push
-
-```bash
-cd ~/alkhidmat-relief-copilot   # or your clone path
-git pull origin main
-docker compose up -d --build
-```
-
-**Volume:** `relief_data` keeps SQLite + checkpoints across rebuilds. Do not `docker compose down -v` on production unless you intend to wipe demo data.
-
----
-
-## Environment variables
-
-| Var | Production |
-|-----|------------|
+| Var | Value |
+|-----|--------|
 | `LLM_MODE` | `qwen` |
-| `DASHSCOPE_API_KEY` | server `.env` only |
+| `DASHSCOPE_API_KEY` | from Secret Manager |
 | `DASHSCOPE_MODEL` | `qwen-plus` (or your Model Studio model) |
-| `DASHSCOPE_BASE_URL` | intl or Beijing compatible-mode URL |
-| `CORS_ORIGINS` | `*` (same-origin UI) or `http://PUBLIC_IP` |
-| `DATABASE_URL` | set by compose to `/app/data/relief.db` |
-| `CHECKPOINT_PATH` | `/app/data/checkpoints.db` |
-| `NEXT_PUBLIC_API_URL` | **empty** at Docker build (same-origin) |
+| `DASHSCOPE_BASE_URL` | working intl/Beijing compatible-mode URL |
+| `DATABASE_URL` | Postgres via Cloud SQL socket (set by deploy script) |
+| `CORS_ORIGINS` | Web Cloud Run origin |
+| `PORT` | Injected by Cloud Run |
 
-Local Next.js still defaults API to `http://localhost:8000` when env is unset.
+Web image build-arg: `NEXT_PUBLIC_API_URL=https://<relief-api-url>`
 
 ---
 
 ## HITL durability
 
-LangGraph uses **AsyncSqliteSaver** → `checkpoints.db` on the data volume.  
-Case row stays in `relief.db` as `pending_hitl`. Approve/Reject after API restart works **if the volume was not deleted**.
+On GCP, LangGraph uses **Postgres checkpointer** on Cloud SQL (same DB).  
+Local Compose still uses SQLite `checkpoints.db`.
 
 ---
 
-## Next (not this cut)
+## Redeploy (after code push)
 
-1. Domain + HTTPS (Caddy / certbot / SLB)  
-2. RDS Postgres (`DATABASE_URL`)  
-3. GitHub Actions → SSH deploy  
-4. Optional embeddings RAG (OpenSearch / pgvector)  
+```bash
+# From repo root, project x-saas, region asia-south1
+bash deploy/gcp/03_build_and_deploy.sh
+```
+
+Or rebuild only api/web as documented in the script comments.
+
+**Feature chats:** after changing API contracts or env names, update this file and redeploy both services if `NEXT_PUBLIC_API_URL` or CORS must change.
 
 ---
 
-## For other Cursor chats
+## Smoke checklist
 
-When changing the product:
+```bash
+curl -s https://API_URL/health
+# expect: "tier":"B"
+```
 
-- Keep nginx path `/api/` → FastAPI `/api/`  
-- Persist DB under `/app/data` in Docker  
-- Call `await init_graph()` at startup (already in `main.py` lifespan)  
-- Update this file if live URL, ports, or env names change  
+Browser on **Web URL**:
+
+1. `/chat` — Urdu food → Knowledge citations + ticket  
+2. Duplicate `03001234567` → Supervisor → Approve  
+3. Case detail → timeline + Export PDF  
+4. Role switcher  
+
+Then set **Live API URL** / **Live Web URL** at the top of this file and commit.
+
+---
+
+## Later (not this cut)
+
+1. Custom domain on Cloud Run  
+2. `min-instances=1` on demo day  
+3. GitHub Actions → Cloud Build  
+4. Optional pgvector / embeddings RAG  

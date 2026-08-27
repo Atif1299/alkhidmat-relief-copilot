@@ -1,0 +1,9 @@
+# Cloud Build for API (optional standalone; 03 script uses gcloud builds submit --tag)
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_IMG_API}", "."]
+    dir: backend
+images:
+  - ${_IMG_API}
+substitutions:
+  _IMG_API: asia-south1-docker.pkg.dev/x-saas/relief/api:latest

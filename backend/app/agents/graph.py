@@ -7,16 +7,15 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-import aiosqlite
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph import END, START, StateGraph
 
 from app.agents import nodes
 from app.agents.state import CaseState
 from app.config import settings
 
-_checkpointer: AsyncSqliteSaver | None = None
+_checkpointer: Any = None
 _graph = None
+_pg_pool: Any = None
 
 
 def _checkpoint_path() -> Path:
@@ -27,16 +26,51 @@ def _checkpoint_path() -> Path:
 
 
 async def init_graph() -> None:
-    """Open durable SQLite checkpointer (call once at app startup)."""
-    global _checkpointer, _graph
+    """Open durable checkpointer (SQLite locally, Postgres on GCP)."""
+    global _checkpointer, _graph, _pg_pool
     if _graph is not None:
         return
-    path = _checkpoint_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    conn = await aiosqlite.connect(str(path))
-    _checkpointer = AsyncSqliteSaver(conn)
-    await _checkpointer.setup()
+
+    if settings.is_postgres:
+        from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+        from psycopg.rows import dict_row
+        from psycopg_pool import AsyncConnectionPool
+
+        _pg_pool = AsyncConnectionPool(
+            conninfo=settings.psycopg_url,
+            kwargs={
+                "autocommit": True,
+                "prepare_threshold": 0,
+                "row_factory": dict_row,
+            },
+            open=False,
+            min_size=1,
+            max_size=5,
+        )
+        await _pg_pool.open()
+        _checkpointer = AsyncPostgresSaver(_pg_pool)
+        await _checkpointer.setup()
+    else:
+        import aiosqlite
+        from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+
+        path = _checkpoint_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        conn = await aiosqlite.connect(str(path))
+        _checkpointer = AsyncSqliteSaver(conn)
+        await _checkpointer.setup()
+
     _graph = build_graph()
+
+
+async def close_graph() -> None:
+    """Release Postgres pool on shutdown."""
+    global _pg_pool, _checkpointer, _graph
+    if _pg_pool is not None:
+        await _pg_pool.close()
+        _pg_pool = None
+    _checkpointer = None
+    _graph = None
 
 
 def build_graph():

@@ -22,13 +22,41 @@ class Settings(BaseSettings):
         "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
     )
     database_url: str = "sqlite:///./data/relief.db"
-    # LangGraph HITL checkpoints (survives process restart when on persistent volume)
+    # LangGraph HITL checkpoints (SQLite file path when using SQLite; unused for Postgres)
     checkpoint_path: str = ""
     cors_origins: str = "http://localhost:3000"
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        origins = [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        if origins == ["*"]:
+            return ["*"]
+        return origins
+
+    @property
+    def is_postgres(self) -> bool:
+        url = self.database_url.lower()
+        return url.startswith("postgresql") or url.startswith("postgres")
+
+    @property
+    def sqlalchemy_url(self) -> str:
+        """Normalize DATABASE_URL for SQLAlchemy."""
+        url = self.database_url
+        if url.startswith("postgres://"):
+            return "postgresql+psycopg://" + url[len("postgres://") :]
+        if url.startswith("postgresql://") and "+psycopg" not in url:
+            return "postgresql+psycopg://" + url[len("postgresql://") :]
+        return url
+
+    @property
+    def psycopg_url(self) -> str:
+        """Plain postgresql:// URL for LangGraph / psycopg."""
+        url = self.database_url
+        if "+psycopg" in url:
+            url = url.replace("postgresql+psycopg://", "postgresql://", 1)
+        if url.startswith("postgres://"):
+            url = "postgresql://" + url[len("postgres://") :]
+        return url
 
     @property
     def db_path(self) -> Path:

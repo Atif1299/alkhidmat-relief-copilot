@@ -9,18 +9,31 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.config import settings
 from app.db.models import Base
 
-_db_file = settings.db_path
-_db_file.parent.mkdir(parents=True, exist_ok=True)
 
-engine = create_engine(
-    f"sqlite:///{_db_file.as_posix()}",
-    connect_args={"check_same_thread": False},
-)
+def _make_engine():
+    if settings.is_postgres:
+        return create_engine(
+            settings.sqlalchemy_url,
+            pool_pre_ping=True,
+            pool_size=5,
+            max_overflow=5,
+        )
+    db_file = settings.db_path
+    db_file.parent.mkdir(parents=True, exist_ok=True)
+    return create_engine(
+        f"sqlite:///{db_file.as_posix()}",
+        connect_args={"check_same_thread": False},
+    )
+
+
+engine = _make_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
+    if settings.is_postgres:
+        return
     # Lightweight SQLite migrations for Tier B columns
     with engine.begin() as conn:
         tables = {

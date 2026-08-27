@@ -8,14 +8,14 @@ NGO **Aid Desk SaaS** module: messy Urdu/English aid request → verified, resou
 
 | Layer | Choice |
 |-------|--------|
-| Orchestration | LangGraph (**AsyncSqliteSaver** on disk for durable HITL) |
+| Orchestration | LangGraph (SQLite checkpointer locally; **Postgres** checkpointer on GCP) |
 | LLM | DashScope Qwen (`LLM_MODE=qwen`) or deterministic mock |
-| Knowledge | File SOPs → `sop_chunks` SQLite + keyword retrieval |
+| Knowledge | File SOPs → `sop_chunks` + keyword retrieval |
 | API | FastAPI + SSE |
 | UI | Next.js 14 App Router (demo role switcher) |
-| DB | SQLite via SQLAlchemy |
+| DB | SQLite locally; **Cloud SQL Postgres** on GCP |
 | PDF | reportlab |
-| Deploy | Alibaba ECS + Docker Compose (nginx) — see [DEPLOYMENT.md](DEPLOYMENT.md) |
+| Deploy | **GCP Cloud Run** (project `x-saas`) — see [DEPLOYMENT.md](DEPLOYMENT.md) |
 
 ## Graph (Tier B)
 
@@ -51,25 +51,27 @@ START → Intake → Triage → Knowledge → Integrity
 - `frontend/app/cases/[id]` — timeline + export
 - `frontend/app/supervisor` — HITL queue
 
-## Alibaba Cloud mapping
+## Cloud mapping
 
-| Service | Role |
-|---------|------|
-| DashScope / Qwen | Agent LLM |
-| Qoder | Official hackathon IDE / Skills-MCP narrative |
-| **ECS** | Live product (Compose: nginx + API + Next) |
-| OSS | Future doc upload (stretch) |
-| RDS Postgres | Next after live URL stable |
+| Provider | Service | Role |
+|----------|---------|------|
+| Alibaba | DashScope / Qwen | Agent LLM |
+| Alibaba | Qoder | Hackathon IDE / Skills-MCP narrative |
+| **GCP** | Cloud Run `relief-api` / `relief-web` | Live product HTTPS |
+| **GCP** | Cloud SQL Postgres | Cases + HITL checkpoints |
+| **GCP** | Secret Manager | DashScope API key |
+| Alibaba | OSS | Future doc upload (stretch) — not required for live |
+
+**Note:** Alibaba ECS was attempted then abandoned (free trial ineligible). Hosting is GCP-only.
 
 ## Run locally
 
-See root [README.md](../README.md).
+See root [README.md](../README.md). Optional: `docker compose up` (SQLite + nginx) for local prod-like smoke.
 
 ## Deploy
 
 **Source of truth:** [DEPLOYMENT.md](DEPLOYMENT.md)
 
-1. `docker compose up -d --build` on ECS with `.env` from `.env.production.example`.
-2. Same-origin UI (`NEXT_PUBLIC_API_URL=""`); nginx proxies `/api` and `/health`.
-3. Persist volume `relief_data` (cases + HITL checkpoints).
-4. Next: HTTPS domain → RDS → CI.
+1. GCP project `x-saas`, region `asia-south1`.
+2. `bash deploy/gcp/03_build_and_deploy.sh` (after bootstrap).
+3. Web build-arg `NEXT_PUBLIC_API_URL` = API Cloud Run URL; API `CORS_ORIGINS` = web origin.

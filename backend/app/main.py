@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.agents.graph import init_graph
+from app.agents.graph import close_graph, init_graph
 from app.api import cases, chat, metrics, supervisor
 from app.config import settings
 from app.db.seed import run_seed
@@ -19,6 +19,7 @@ async def lifespan(_app: FastAPI):
     info = run_seed()
     print(f"[startup] DB ready: {info}")
     yield
+    await close_graph()
 
 
 app = FastAPI(
