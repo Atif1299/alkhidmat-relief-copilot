@@ -30,36 +30,60 @@ engine = _make_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def _ensure_postgres_extensions() -> None:
-    """Enable pgvector and optional vector column for ANN search."""
+def _ensure_postgres_schema() -> None:
+    """Migrate existing Cloud SQL tables + enable pgvector when available."""
     dim = int(settings.embedding_dim)
     with engine.begin() as conn:
-        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-        # Portable JSON embedding already on SopChunk; add native vector for SQL <=> when present
+        # Tier 3 portable embeddings on existing sop_chunks rows
         conn.execute(
             text(
-                f"""
+                """
                 DO $$
                 BEGIN
-                  IF NOT EXISTS (
+                  IF EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_name = 'sop_chunks'
+                  ) AND NOT EXISTS (
                     SELECT 1 FROM information_schema.columns
-                    WHERE table_name = 'sop_chunks' AND column_name = 'embedding_vec'
+                    WHERE table_name = 'sop_chunks' AND column_name = 'embedding'
                   ) THEN
-                    ALTER TABLE sop_chunks ADD COLUMN embedding_vec vector({dim});
+                    ALTER TABLE sop_chunks ADD COLUMN embedding JSON;
                   END IF;
                 END $$;
                 """
             )
         )
+        try:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            conn.execute(
+                text(
+                    f"""
+                    DO $$
+                    BEGIN
+                      IF EXISTS (
+                        SELECT 1 FROM information_schema.tables
+                        WHERE table_name = 'sop_chunks'
+                      ) AND NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'sop_chunks' AND column_name = 'embedding_vec'
+                      ) THEN
+                        ALTER TABLE sop_chunks ADD COLUMN embedding_vec vector({dim});
+                      END IF;
+                    END $$;
+                    """
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            print(f"[startup] pgvector setup skipped: {exc}")
 
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     if settings.is_postgres:
         try:
-            _ensure_postgres_extensions()
-        except Exception as exc:  # noqa: BLE001 — allow boot without vector on odd Cloud SQL
-            print(f"[startup] pgvector setup skipped: {exc}")
+            _ensure_postgres_schema()
+        except Exception as exc:  # noqa: BLE001
+            print(f"[startup] postgres schema migrate skipped: {exc}")
         return
     with engine.begin() as conn:
         tables = {
