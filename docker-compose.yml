@@ -1,4 +1,21 @@
 services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: aiddesk
+      POSTGRES_PASSWORD: aiddesk
+      POSTGRES_DB: aiddesk
+    ports:
+      - "5432:5432"
+    volumes:
+      - relief_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aiddesk -d aiddesk"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   api:
     build:
       context: ./backend
@@ -6,25 +23,30 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: sqlite:////app/data/relief.db
+      DATABASE_URL: postgresql+psycopg://aiddesk:aiddesk@db:5432/aiddesk
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
       LLM_MODE: ${LLM_MODE:-qwen}
       DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
       DASHSCOPE_MODEL: ${DASHSCOPE_MODEL:-qwen-plus}
       DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL:-https://dashscope-intl.aliyuncs.com/compatible-mode/v1}
-      CHECKPOINT_PATH: /app/data/checkpoints.db
+      DASHSCOPE_EMBEDDING_MODEL: ${DASHSCOPE_EMBEDDING_MODEL:-text-embedding-v2}
+      JWT_SECRET: ${JWT_SECRET:-dev-change-me-aiddesk-jwt-secret-min-32-chars}
+      AUTH_DISABLED: ${AUTH_DISABLED:-false}
       PORT: "8000"
     volumes:
       - relief_data:/app/data
     ports:
       - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 25s
 
   web:
     build:
@@ -42,3 +64,4 @@ services:
 
 volumes:
   relief_data:
+  relief_pg:

@@ -4,6 +4,8 @@
  * - Empty string (Docker build ARG): same-origin relative paths via nginx (/api/...)
  * - Explicit URL: that host
  */
+import { authHeaders, getToken } from "./auth";
+
 function resolveApiUrl(): string {
   const raw = process.env.NEXT_PUBLIC_API_URL;
   if (raw === "") {
@@ -30,6 +32,7 @@ export type SopHit = {
   excerpt?: string;
   score?: number;
   source_file?: string;
+  retrieval_mode?: string;
 };
 
 export type ChatResult = {
@@ -52,10 +55,40 @@ export type ChatResult = {
   };
 };
 
+export type LoginResult = {
+  access_token: string;
+  token_type: string;
+  role: string;
+  email: string;
+  user_id: string;
+};
+
+export async function login(email: string, password: string): Promise<LoginResult> {
+  const res = await fetch(`${API_URL}/api/v1/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(detail || `Login failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchMe() {
+  const res = await fetch(`${API_URL}/api/v1/auth/me`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Not authenticated");
+  return res.json();
+}
+
 export async function chatSync(message: string): Promise<ChatResult> {
   const res = await fetch(`${API_URL}/api/v1/chat/sync`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ message }),
   });
   if (!res.ok) throw new Error(`Chat failed: ${res.status}`);
@@ -69,7 +102,10 @@ export async function chatStream(
 ): Promise<ChatResult | null> {
   const res = await fetch(`${API_URL}/api/v1/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+    headers: authHeaders({
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+    }),
     body: JSON.stringify({ message }),
   });
   if (!res.ok || !res.body) throw new Error(`Chat stream failed: ${res.status}`);
@@ -106,13 +142,19 @@ export async function chatStream(
 
 export async function listCases(status?: string) {
   const q = status ? `?status=${encodeURIComponent(status)}` : "";
-  const res = await fetch(`${API_URL}/api/v1/cases${q}`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/api/v1/cases${q}`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
   if (!res.ok) throw new Error("Failed to load cases");
   return res.json();
 }
 
 export async function getSupervisorQueue() {
-  const res = await fetch(`${API_URL}/api/v1/supervisor/queue`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/api/v1/supervisor/queue`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
   if (!res.ok) throw new Error("Failed to load queue");
   return res.json();
 }
@@ -120,7 +162,7 @@ export async function getSupervisorQueue() {
 export async function decideCase(caseId: string, decision: "approve" | "reject", note?: string) {
   const res = await fetch(`${API_URL}/api/v1/supervisor/${caseId}/decide`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ decision, note }),
   });
   if (!res.ok) throw new Error("Decision failed");
@@ -128,19 +170,26 @@ export async function decideCase(caseId: string, decision: "approve" | "reject",
 }
 
 export async function getMetrics() {
-  const res = await fetch(`${API_URL}/api/v1/metrics`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/api/v1/metrics`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
   if (!res.ok) throw new Error("Failed to load metrics");
   return res.json();
 }
 
 export async function getCase(caseId: string) {
-  const res = await fetch(`${API_URL}/api/v1/cases/${caseId}`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/api/v1/cases/${caseId}`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
   if (!res.ok) throw new Error("Failed to load case");
   return res.json();
 }
 
 export async function getCaseTimeline(caseId: string) {
   const res = await fetch(`${API_URL}/api/v1/cases/${caseId}/timeline`, {
+    headers: authHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to load timeline");
@@ -149,4 +198,23 @@ export async function getCaseTimeline(caseId: string) {
 
 export function caseExportPdfUrl(caseId: string) {
   return `${API_URL}/api/v1/cases/${caseId}/export.pdf`;
+}
+
+/** Download PDF with Bearer token (cannot use plain <a href>). */
+export async function downloadCasePdf(caseId: string, filename?: string) {
+  const res = await fetch(caseExportPdfUrl(caseId), {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("PDF export failed");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename || `${caseId}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function requireTokenOrThrow() {
+  if (!getToken()) throw new Error("Not logged in");
 }

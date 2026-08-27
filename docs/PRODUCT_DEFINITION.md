@@ -98,6 +98,13 @@ Registration only locked the **idea + name + short detail**. Architecture, stack
 11. Seed “Lahore district” inventory that feels real  
 12. Export case report / PDF summary for ops  
 
+### Tier 3 — Production Hardening (local-first → GCP)
+
+13. **Docker Postgres + pgvector** as the target DB (SQLite retired for product work)  
+14. **JWT auth** with API-enforced roles (`requester` / `desk` / `supervisor`)  
+15. **Vector RAG** — DashScope embeddings + pgvector / cosine; keyword fallback  
+16. Keep durable HITL checkpointer on Postgres; redeploy Cloud Run when local green  
+
 ### Tier C — Defer (looks big, weak demo ROI)
 
 - Full WhatsApp/Twilio production  

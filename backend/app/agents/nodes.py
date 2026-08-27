@@ -90,13 +90,14 @@ async def knowledge_node(state: CaseState) -> dict[str, Any]:
         )
         hits = sop_tools.search_sops(db, category=category, query=query, limit=3)
         titles = ", ".join(h["title"] for h in hits) if hits else "none"
+        mode = (hits[0].get("retrieval_mode") if hits else "keyword") or "keyword"
         log_event(
             db,
             case_id=state["case_id"],
             actor="Knowledge",
             event_type="sop_retrieved",
             detail=titles,
-            payload={"sop_hits": hits},
+            payload={"sop_hits": hits, "retrieval_mode": mode},
         )
         return {
             "sop_hits": hits,
@@ -104,8 +105,9 @@ async def knowledge_node(state: CaseState) -> dict[str, Any]:
                 _step(
                     "Knowledge",
                     "sop_retrieved",
-                    f"Retrieved {len(hits)} SOP(s): {titles}",
+                    f"Retrieved {len(hits)} SOP(s) via {mode}: {titles}",
                     sop_hits=hits,
+                    retrieval_mode=mode,
                 )
             ],
         }

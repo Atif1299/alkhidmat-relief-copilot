@@ -1,9 +1,9 @@
-"""Database session and engine."""
+"""Database session and engine — Postgres target; SQLite legacy for tests."""
 
 from collections.abc import Generator
 from pathlib import Path
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import settings
@@ -30,11 +30,37 @@ engine = _make_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+def _ensure_postgres_extensions() -> None:
+    """Enable pgvector and optional vector column for ANN search."""
+    dim = int(settings.embedding_dim)
+    with engine.begin() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        # Portable JSON embedding already on SopChunk; add native vector for SQL <=> when present
+        conn.execute(
+            text(
+                f"""
+                DO $$
+                BEGIN
+                  IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'sop_chunks' AND column_name = 'embedding_vec'
+                  ) THEN
+                    ALTER TABLE sop_chunks ADD COLUMN embedding_vec vector({dim});
+                  END IF;
+                END $$;
+                """
+            )
+        )
+
+
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     if settings.is_postgres:
+        try:
+            _ensure_postgres_extensions()
+        except Exception as exc:  # noqa: BLE001 — allow boot without vector on odd Cloud SQL
+            print(f"[startup] pgvector setup skipped: {exc}")
         return
-    # Lightweight SQLite migrations for Tier B columns
     with engine.begin() as conn:
         tables = {
             row[0]
@@ -49,6 +75,13 @@ def init_db() -> None:
             }
             if "sop_hits" not in cols:
                 conn.exec_driver_sql("ALTER TABLE cases ADD COLUMN sop_hits JSON")
+        if "sop_chunks" in tables:
+            cols = {
+                row[1]
+                for row in conn.exec_driver_sql("PRAGMA table_info(sop_chunks)").fetchall()
+            }
+            if "embedding" not in cols:
+                conn.exec_driver_sql("ALTER TABLE sop_chunks ADD COLUMN embedding JSON")
 
 
 def get_db() -> Generator[Session, None, None]:

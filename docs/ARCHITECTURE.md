@@ -1,77 +1,68 @@
-# Architecture — Alkhidmat Relief Copilot (Tier B)
+# Architecture — Alkhidmat Relief Copilot (Tier 3)
 
 ## Product
 
-NGO **Aid Desk SaaS** module: messy Urdu/English aid request → verified, resource-matched ticket with HITL for critical/high-risk cases — plus SOP knowledge retrieval, role views, case timeline, and PDF export.
+NGO **Aid Desk SaaS**: Urdu/English request → verified ticket with HITL — JWT roles, Postgres, vector SOP RAG.
 
 ## Stack
 
 | Layer | Choice |
 |-------|--------|
-| Orchestration | LangGraph (SQLite checkpointer locally; **Postgres** checkpointer on GCP) |
-| LLM | DashScope Qwen (`LLM_MODE=qwen`) or deterministic mock |
-| Knowledge | File SOPs → `sop_chunks` + keyword retrieval |
+| Orchestration | LangGraph + **Postgres** checkpointer (Compose / Cloud SQL) |
+| LLM | DashScope Qwen |
+| Knowledge | SOP files → embeddings (DashScope) → **pgvector / cosine** + keyword fallback |
+| Auth | JWT (HS256) + bcrypt; roles `requester` \| `desk` \| `supervisor` |
 | API | FastAPI + SSE |
-| UI | Next.js 14 App Router (demo role switcher) |
-| DB | SQLite locally; **Cloud SQL Postgres** on GCP |
+| UI | Next.js 14 + `/login` |
+| DB | **Docker Postgres + pgvector** locally; Cloud SQL on GCP |
 | PDF | reportlab |
-| Deploy | **GCP Cloud Run** (project `x-saas-488416`) — see [DEPLOYMENT.md](DEPLOYMENT.md) |
+| Deploy | GCP Cloud Run — [DEPLOYMENT.md](DEPLOYMENT.md) |
 
-## Graph (Tier B)
+**SQLite** is retired as the product target (tests may still use it).
+
+## Graph
 
 ```
 START → Intake → Triage → Knowledge → Integrity
                                           ├─ (normal) → Matcher → Dispatch → END
                                           └─ (HITL) → hitl_gate → END (pause)
                                                      resume(approve) → Matcher → Dispatch → END
-                                                     resume(reject) → END
 ```
 
-**Non-negotiable:** Integrity never skipped on create. Knowledge runs after Triage (category known) before Integrity.
+## Tier 3 modules
 
-## Tier B modules
+| ID | Capability |
+|----|------------|
+| T3-13 | Compose `db` = `pgvector/pgvector:pg16` |
+| T3-14 | `POST /api/v1/auth/login`, `GET /me`; API role gates |
+| T3-15 | Vector `search_sops` + `retrieval_mode` in trace |
+| T3-16 | Promote JWT_SECRET + vector ext to Cloud SQL |
 
-| Capability | Implementation |
-|------------|----------------|
-| B8 Knowledge / light RAG | `backend/app/knowledge/sops/`, `SopChunk`, `search_sops`, `knowledge_node` |
-| B9 Role views | Topbar switcher `requester\|desk\|supervisor` (localStorage); client nav gating |
-| B10 Timeline | `GET /api/v1/cases/{id}/timeline` + `/cases/[id]` UI |
-| B11 Lahore seed | Expanded resources/volunteers/cases + SOP index on startup |
-| B12 PDF export | `GET /api/v1/cases/{id}/export.pdf` |
+## Demo users (password `AidDesk!2026`)
 
-## Key modules
-
-- `backend/app/agents/graph.py` — compiled graph + `run_pipeline` / `resume_after_hitl`
-- `backend/app/agents/nodes.py` — Intake…Knowledge…Dispatch
-- `backend/app/tools/cases.py` — case tools
-- `backend/app/tools/sops.py` — SOP retrieval
-- `backend/app/services/llm.py` — mock + Qwen
-- `backend/app/services/pdf_export.py` — case PDF
-- `frontend/app/chat` — live AgentTrace + SOP citations
-- `frontend/app/cases/[id]` — timeline + export
-- `frontend/app/supervisor` — HITL queue
+| Email | Role |
+|-------|------|
+| citizen@aiddesk.example | requester |
+| desk@aiddesk.example | desk |
+| supervisor@aiddesk.example | supervisor |
 
 ## Cloud mapping
 
 | Provider | Service | Role |
 |----------|---------|------|
-| Alibaba | DashScope / Qwen | Agent LLM |
-| Alibaba | Qoder | Hackathon IDE / Skills-MCP narrative |
-| **GCP** | Cloud Run `relief-api` / `relief-web` | Live product HTTPS |
-| **GCP** | Cloud SQL Postgres | Cases + HITL checkpoints |
-| **GCP** | Secret Manager | DashScope API key |
-| Alibaba | OSS | Future doc upload (stretch) — not required for live |
+| Alibaba | DashScope | LLM + embeddings |
+| GCP | Cloud Run | Live HTTPS |
+| GCP | Cloud SQL + pgvector | Cases, checkpoints, vectors |
+| GCP | Secret Manager | DashScope + JWT |
 
-**Note:** Alibaba ECS was attempted then abandoned (free trial ineligible). Hosting is GCP-only.
+## Run locally (Tier 3)
 
-## Run locally
+```bash
+docker compose up -d db
+# backend/.env → DATABASE_URL=postgresql+psycopg://aiddesk:aiddesk@localhost:5432/aiddesk
+cd backend && .venv\Scripts\activate && pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+cd frontend && npm run dev
+```
 
-See root [README.md](../README.md). Optional: `docker compose up` (SQLite + nginx) for local prod-like smoke.
-
-## Deploy
-
-**Source of truth:** [DEPLOYMENT.md](DEPLOYMENT.md)
-
-1. GCP project `x-saas-488416`, region `asia-south1`.
-2. `bash deploy/gcp/03_build_and_deploy.sh` (after bootstrap).
-3. Web build-arg `NEXT_PUBLIC_API_URL` = API Cloud Run URL; API `CORS_ORIGINS` = web origin.
+Open http://localhost:3000/login

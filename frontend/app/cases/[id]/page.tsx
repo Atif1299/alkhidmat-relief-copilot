@@ -7,7 +7,7 @@ import { AgentTrace } from "@/components/AgentTrace";
 import { CaseTimeline, type TimelineStage } from "@/components/CaseTimeline";
 import { SopCitations, type SopHit } from "@/components/SopCitations";
 import {
-  caseExportPdfUrl,
+  downloadCasePdf,
   getCase,
   type AgentStep,
 } from "@/lib/api";
@@ -69,9 +69,17 @@ export default function CaseDetailPage() {
         {data.duplicate_flag ? " · duplicate" : ""}
       </p>
       <div className="actions" style={{ margin: "0.75rem 0" }}>
-        <a className="btn" href={caseExportPdfUrl(data.id)} target="_blank" rel="noreferrer">
+        <button
+          className="btn"
+          type="button"
+          onClick={() =>
+            downloadCasePdf(data.id, `${data.ticket_id || data.id}.pdf`).catch((e) =>
+              setError(e instanceof Error ? e.message : "PDF failed")
+            )
+          }
+        >
           Export PDF
-        </a>
+        </button>
         {data.status === "pending_hitl" && (
           <Link className="btn secondary" href="/supervisor">
             Open supervisor

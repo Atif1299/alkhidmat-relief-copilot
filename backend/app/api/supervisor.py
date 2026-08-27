@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.agents.graph import resume_after_hitl
 from app.db.models import Case
 from app.db.session import get_db
+from app.deps.auth import RequireSupervisor
 from app.schemas import DecideRequest
 from app.services.audit import log_event
 from app.tools.cases import update_case_fields
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/api/v1/supervisor", tags=["supervisor"])
 
 
 @router.get("/queue")
-def hitl_queue(db: Session = Depends(get_db)):
+def hitl_queue(db: Session = Depends(get_db), _user: RequireSupervisor = ...):
     rows = (
         db.query(Case)
         .filter(Case.status == "pending_hitl")
@@ -39,7 +40,12 @@ def hitl_queue(db: Session = Depends(get_db)):
 
 
 @router.post("/{case_id}/decide")
-async def decide(case_id: str, body: DecideRequest, db: Session = Depends(get_db)):
+async def decide(
+    case_id: str,
+    body: DecideRequest,
+    db: Session = Depends(get_db),
+    _user: RequireSupervisor = ...,
+):
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(404, "Case not found")

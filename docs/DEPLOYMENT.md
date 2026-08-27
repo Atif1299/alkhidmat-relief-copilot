@@ -35,7 +35,15 @@ Active plan copy: [.cursor/gcp_cloud_run_deploy.plan.md](../.cursor/gcp_cloud_ru
 | Secret Manager | `dashscope-api-key`, `db-password` | Secrets |
 | Cloud Build | builds | Build/push images |
 
-**Local only:** [docker-compose.yml](../docker-compose.yml) still runs nginx + SQLite for laptop demos — **not** used on GCP.
+**Local Compose:** [docker-compose.yml](../docker-compose.yml) runs **`db` (Postgres/pgvector) + `api` + `web`**. SQLite is not the Tier 3 product target.
+
+### Tier 3 promote checklist
+
+1. Cloud SQL: enable `vector` extension (`CREATE EXTENSION vector;`).
+2. Secret Manager: add `jwt-secret` (map to `JWT_SECRET` on Cloud Run).
+3. Redeploy API/web via `deploy/gcp/03_build_and_deploy.sh`.
+4. Confirm `/health` shows `"tier": "3"` and login works on live URL.
+5. Reindex SOPs (startup embeds when `DASHSCOPE_API_KEY` set and chunks lack embeddings).
 
 ---
 
@@ -95,6 +103,9 @@ gcloud config set project x-saas-488416
 | `DASHSCOPE_MODEL` | `qwen-plus` (or your Model Studio model) |
 | `DASHSCOPE_BASE_URL` | Beijing MaaS compatible-mode (working): `https://ws-3fcwag66tpemo42e.cn-beijing.maas.aliyuncs.com/compatible-mode/v1` — **not** intl (401) |
 | `DATABASE_URL` | Postgres via Cloud SQL socket (set by deploy script) |
+| `JWT_SECRET` | from Secret Manager (`jwt-secret`) |
+| `AUTH_DISABLED` | `false` |
+| `DASHSCOPE_EMBEDDING_MODEL` | `text-embedding-v2` |
 | `CORS_ORIGINS` | Web Cloud Run origin |
 | `PORT` | Injected by Cloud Run |
 
@@ -104,8 +115,8 @@ Web image build-arg: `NEXT_PUBLIC_API_URL=https://<relief-api-url>`
 
 ## HITL durability
 
-On GCP, LangGraph uses **Postgres checkpointer** on Cloud SQL (same DB).  
-Local Compose still uses SQLite `checkpoints.db`.
+On GCP and local Compose, LangGraph uses the **Postgres checkpointer** when `DATABASE_URL` is Postgres.  
+SQLite checkpointer is for automated tests / legacy only.
 
 ---
 
@@ -136,17 +147,23 @@ gcloud run deploy relief-api --image asia-south1-docker.pkg.dev/x-saas-488416/re
 
 ```bash
 curl -s https://relief-api-4idrhaffca-el.a.run.app/health
-# expect: "tier":"B"
+# expect: "tier":"3", "auth_required":true
 ```
 
 Browser on **https://relief-web-4idrhaffca-el.a.run.app**:
 
-1. `/chat` — Urdu food → Knowledge citations + ticket  
-2. Duplicate `03001234567` / critical medical → Supervisor → Approve  
-3. Case detail → timeline + Export PDF (`/api/v1/cases/{id}/export.pdf`)  
-4. Role switcher  
+1. `/login` as `supervisor@aiddesk.example` / `AidDesk!2026`
+2. `/chat` — Urdu food → Knowledge citations + ticket  
+3. Duplicate `03001234567` / critical medical → Supervisor → Approve  
+4. Case detail → timeline + Export PDF  
+5. Logout → login as `citizen@aiddesk.example` — chat-only nav  
 
-**Smoke results (2026-08-27):** food chat → ticket `AKD-20260827-07B1CE`; critical → `pending_hitl` in queue; timeline + PDF 200.
+**Reindex SOPs on Cloud SQL (optional one-off):**
+
+```bash
+# from a shell with DATABASE_URL + DASHSCOPE_API_KEY
+cd backend && python -m app.tools.reindex_sops --force
+```
 
 ---
 
@@ -155,4 +172,4 @@ Browser on **https://relief-web-4idrhaffca-el.a.run.app**:
 1. Custom domain on Cloud Run  
 2. `min-instances=1` on demo day  
 3. GitHub Actions → Cloud Build  
-4. Optional pgvector / embeddings RAG  
+4. WhatsApp / Alkhidmat ERP connectors (Tier C)  

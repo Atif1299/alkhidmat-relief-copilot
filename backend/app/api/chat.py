@@ -9,13 +9,14 @@ from fastapi import APIRouter
 from sse_starlette.sse import EventSourceResponse
 
 from app.agents.graph import run_pipeline
+from app.deps.auth import RequireRequester
 from app.schemas import ChatRequest
 
 router = APIRouter(prefix="/api/v1", tags=["chat"])
 
 
 @router.post("/chat")
-async def chat(body: ChatRequest):
+async def chat(body: ChatRequest, _user: RequireRequester):
     case_id = body.case_id or str(uuid.uuid4())
 
     async def event_gen():
@@ -74,7 +75,7 @@ async def chat(body: ChatRequest):
 
 
 @router.post("/chat/sync")
-async def chat_sync(body: ChatRequest):
+async def chat_sync(body: ChatRequest, _user: RequireRequester):
     case_id = body.case_id or str(uuid.uuid4())
     result = await run_pipeline(body.message, case_id=case_id)
     return {

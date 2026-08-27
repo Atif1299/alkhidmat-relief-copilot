@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { AgentTrace } from "@/components/AgentTrace";
-import { caseExportPdfUrl, listCases, type AgentStep } from "@/lib/api";
+import { downloadCasePdf, listCases, type AgentStep } from "@/lib/api";
 
 type CaseRow = {
   id: string;
@@ -104,14 +104,17 @@ export default function TicketsPage() {
                       >
                         Trace
                       </button>
-                      <a
+                      <button
                         className="chip"
-                        href={caseExportPdfUrl(c.id)}
-                        target="_blank"
-                        rel="noreferrer"
+                        type="button"
+                        onClick={() =>
+                          downloadCasePdf(c.id, `${c.ticket_id || c.id}.pdf`).catch(() =>
+                            setError("PDF export failed")
+                          )
+                        }
                       >
                         PDF
-                      </a>
+                      </button>
                     </div>
                   </td>
                 </tr>

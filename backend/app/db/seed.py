@@ -7,12 +7,21 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.db.models import Case, CaseEvent, Resource, Volunteer
+from app.db.models import Case, CaseEvent, Resource, User, Volunteer
 from app.db.session import SessionLocal, init_db
+from app.services.security import hash_password
 from app.tools.sops import index_sops_from_files
 
 # Demo duplicate phone (Tier A acceptance)
 DUPLICATE_DEMO_PHONE = "03001234567"
+
+# Tier 3 seeded users (demo password for all)
+DEMO_PASSWORD = "AidDesk!2026"
+SEED_USERS = [
+    {"email": "citizen@aiddesk.example", "role": "requester"},
+    {"email": "desk@aiddesk.example", "role": "desk"},
+    {"email": "supervisor@aiddesk.example", "role": "supervisor"},
+]
 
 RESOURCES = [
     # Food
@@ -298,13 +307,30 @@ def seed_if_empty(db: Session) -> dict:
 
     sop_count = index_sops_from_files(db)
 
+    # Tier 3 auth users
+    existing_emails = {u.email for u in db.query(User).all()}
+    for u in SEED_USERS:
+        email = u["email"].lower()
+        if email not in existing_emails:
+            db.add(
+                User(
+                    id=_uid(),
+                    email=email,
+                    password_hash=hash_password(DEMO_PASSWORD),
+                    role=u["role"],
+                    active=True,
+                )
+            )
+
     db.commit()
     return {
         "resources": db.query(Resource).count(),
         "volunteers": db.query(Volunteer).count(),
         "cases": db.query(Case).count(),
         "sop_chunks": sop_count,
+        "users": db.query(User).count(),
         "duplicate_demo_phone": DUPLICATE_DEMO_PHONE,
+        "demo_password": DEMO_PASSWORD,
     }
 
 

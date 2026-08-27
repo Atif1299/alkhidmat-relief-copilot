@@ -35,6 +35,12 @@ else
   echo -n "$DATABASE_URL" | gcloud secrets create database-url --data-file=-
 fi
 
+# Ensure JWT secret exists (Tier 3 auth)
+if ! gcloud secrets describe jwt-secret &>/dev/null; then
+  python3 -c "import secrets; print(secrets.token_urlsafe(48), end='')" | \
+    gcloud secrets create jwt-secret --data-file=-
+fi
+
 echo "=== Building API image ==="
 gcloud builds submit "$ROOT/backend" --tag "$IMG_API"
 
@@ -51,8 +57,8 @@ gcloud run deploy "$SERVICE_API" \
   --min-instances 0 \
   --max-instances 3 \
   --set-cloudsql-instances "$CONNECTION_NAME" \
-  --set-secrets "DASHSCOPE_API_KEY=dashscope-api-key:latest,DATABASE_URL=database-url:latest" \
-  --set-env-vars "LLM_MODE=qwen,DASHSCOPE_MODEL=${DASHSCOPE_MODEL},DASHSCOPE_BASE_URL=${DASHSCOPE_BASE_URL},CORS_ORIGINS=*"
+  --set-secrets "DASHSCOPE_API_KEY=dashscope-api-key:latest,DATABASE_URL=database-url:latest,JWT_SECRET=jwt-secret:latest" \
+  --set-env-vars "LLM_MODE=qwen,DASHSCOPE_MODEL=${DASHSCOPE_MODEL},DASHSCOPE_BASE_URL=${DASHSCOPE_BASE_URL},DASHSCOPE_EMBEDDING_MODEL=text-embedding-v2,AUTH_DISABLED=false,CORS_ORIGINS=*"
 
 API_URL="$(gcloud run services describe "$SERVICE_API" --region "$REGION" --format='value(status.url)')"
 echo "API_URL=$API_URL"

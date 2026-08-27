@@ -107,3 +107,16 @@ class SopChunk(Base):
     body: Mapped[str] = mapped_column(Text)
     keywords: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     source_file: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
+    # DashScope embedding as JSON list[float] (portable). pgvector column added in init_db for Postgres.
+    embedding: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    email: Mapped[str] = mapped_column(String(256), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(256))
+    role: Mapped[str] = mapped_column(String(32))  # requester | desk | supervisor
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

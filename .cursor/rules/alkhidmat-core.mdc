@@ -23,15 +23,9 @@ An **agentic operations desk** that turns Urdu/English aid requests into **verif
 
 ## Phase
 
-**Phase 2 — Tier B** (complete in product). **Deploy:** Alibaba ECS + Docker Compose — see `docs/DEPLOYMENT.md` (live URL source of truth). Do not start Tier C.
+**Phase 2 — Tier B** (Tier A E2E green). Implement B8–B12 only; do not start Tier C.
 
-Trigger: Tier B plan execution, deploy todos, or user names a Tier B/deploy todo.
-
-## Deploy (cross-chat)
-
-- Production: nginx same-origin `/api` + SQLite volume + durable HITL checkpoints.
-- Before changing ports, CORS, API base URL, or DB path: read and update `docs/DEPLOYMENT.md`.
-- Do not assume localhost-only when adding features.
+Trigger: Tier B plan execution or user names a Tier B todo.
 
 ## Stack (locked)
 

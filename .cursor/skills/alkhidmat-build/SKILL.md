@@ -1,21 +1,21 @@
 ---
 name: alkhidmat-build
 description: >-
-  Implements Alkhidmat Relief Copilot Tier A then Tier B. LangGraph orchestrator,
-  FastAPI, Next.js 14, Qwen/DashScope, HITL supervisor, agent trace UI, Knowledge
-  RAG, roles, timeline, PDF. Repo: github.com/Atif1299/alkhidmat-relief-copilot.
-  Use when user says "start build", names a plan todo, or asks to implement agents,
-  API, or UI.
+  Implements Alkhidmat Relief Copilot Tier A → B → 3. LangGraph orchestrator,
+  FastAPI, Next.js 14, Qwen/DashScope, JWT auth, Postgres/pgvector Knowledge RAG,
+  HITL supervisor, agent trace UI, timeline, PDF. Repo:
+  github.com/Atif1299/alkhidmat-relief-copilot. Use when user says "start build",
+  names a plan todo, or asks to implement agents, API, or UI.
 ---
 
 # Alkhidmat Relief Copilot — Build Skill
 
 ## Before coding
 
-1. Read `docs/PRODUCT_DEFINITION.md` — Tier A/B/C
+1. Read `docs/PRODUCT_DEFINITION.md` — Tier A / B / 3 / C
 2. Read `docs/ARCHITECTURE.md` — current graph
 3. Read `AGENTS.md` — agent contracts
-4. **Tier A must be complete and tested before any Tier B work** (Tier A is green)
+4. **Tier A → B green before Tier 3**; do not start Tier C unless rubric demands
 
 ## Repository
 
@@ -31,13 +31,14 @@ Push `.cursor/` with the codebase. After each todo: **commit + push**.
 |-------|--------|
 | Orchestrator | LangGraph — NOT Hermes |
 | LLM | DashScope Qwen; `LLM_MODE=mock` for offline |
-| Knowledge | SOP markdown → `sop_chunks` + keyword search |
+| Knowledge | SOP markdown → embeddings + **pgvector** / cosine + keyword fallback |
+| Auth | JWT (`/auth/login`, `/auth/me`) + API role gates |
 | API | FastAPI |
-| DB | SQLAlchemy + SQLite |
-| UI | Next.js 14 App Router |
+| DB | **Postgres/pgvector** (Compose `db`); SQLite tests only |
+| UI | Next.js 14 App Router + `/login` |
 | PDF | reportlab |
 
-## LangGraph graph (Tier B)
+## LangGraph graph
 
 ```
 Intake → Triage → Knowledge → Integrity → Matcher → Dispatch
@@ -45,32 +46,24 @@ Intake → Triage → Knowledge → Integrity → Matcher → Dispatch
                     HITL interrupt → Supervisor approve/reject → resume or reject
 ```
 
-**CaseState:** Tier A fields + `sop_hits` (list of title/category/excerpt/score).
+**CaseState:** + `sop_hits` (title/category/excerpt/score/`retrieval_mode`).
 
 **Non-negotiable:** Integrity never skipped. Knowledge after Triage, before Integrity.
 
-## Tier A checklist (complete)
+## Tier A / B (complete)
 
-- [x] A1–A10 (chat, pipeline, HITL, duplicate, matcher, lifecycle, dashboard, audit, Qwen, E2E)
+- [x] A1–A10 + B8–B12
 
-## Tier B checklist
+## Tier 3 — Production Hardening
 
-- [ ] B8 Knowledge step + SOP citations in UI
-- [ ] B9 Role switcher: requester | desk | supervisor (localStorage)
-- [ ] B10 Case timeline API + `/cases/[id]` page
-- [ ] B11 ≥25 Lahore resources + SOP corpus
-- [ ] B12 PDF export endpoint + UI button
-- [ ] Tier A E2E still pass
+- [x] Docker Postgres + pgvector
+- [x] JWT users + API role gates
+- [x] Frontend login + Bearer client
+- [x] Vector RAG + keyword fallback (`python -m app.tools.reindex_sops`)
+- [ ] GCP promote (JWT secret + vector ext + redeploy) when asked
 
-## Tier B implementation todos (commit + push each)
-
-1. `docs: lock Tier B architecture and Cursor build guidance`
-2. `feat(seed): expand Lahore inventory and SOP corpus`
-3. `feat(agents): add Knowledge RAG node with SOP retrieval`
-4. `feat(api): add case timeline endpoint`
-5. `feat(api): add PDF case export`
-6. `feat(frontend): role views, case timeline, SOP citations, PDF export`
-7. `test: Tier B knowledge, timeline, and PDF coverage`
+Demo users (password `AidDesk!2026`):
+`citizen@` / `desk@` / `supervisor@aiddesk.example`
 
 ## Tools
 
@@ -86,21 +79,24 @@ Intake → Triage → Knowledge → Integrity → Matcher → Dispatch
 
 ## API
 
-| Endpoint | Purpose |
-|----------|---------|
-| POST `/api/v1/chat` | SSE agent trace (+ Knowledge) |
-| GET `/api/v1/cases` | Ticket list |
-| GET `/api/v1/cases/{id}` | Detail + events + sop_hits |
-| GET `/api/v1/cases/{id}/timeline` | Product timeline stages |
-| GET `/api/v1/cases/{id}/export.pdf` | PDF report |
-| GET `/api/v1/supervisor/queue` | Pending HITL |
-| POST `/api/v1/supervisor/{id}/decide` | approve/reject |
-| GET `/api/v1/metrics` | Dashboard stats |
+| Endpoint | Purpose | Roles |
+|----------|---------|-------|
+| POST `/api/v1/auth/login` | JWT | public |
+| GET `/api/v1/auth/me` | Current user | auth |
+| POST `/api/v1/chat` | SSE agent trace | requester+ |
+| GET `/api/v1/cases` | Ticket list | desk+ |
+| GET `/api/v1/cases/{id}` | Detail | requester+ |
+| GET `/api/v1/cases/{id}/timeline` | Timeline | desk+ |
+| GET `/api/v1/cases/{id}/export.pdf` | PDF | desk+ |
+| GET `/api/v1/supervisor/queue` | Pending HITL | supervisor |
+| POST `/api/v1/supervisor/{id}/decide` | approve/reject | supervisor |
+| GET `/api/v1/metrics` | Dashboard | desk+ |
 
 ## Frontend routes
 
 | Route | Roles |
 |-------|-------|
+| `/login` | public |
 | `/chat` | requester, desk, supervisor |
 | `/tickets` | desk, supervisor |
 | `/cases/[id]` | desk, supervisor |
@@ -109,16 +105,16 @@ Intake → Triage → Knowledge → Integrity → Matcher → Dispatch
 
 ## Demo scenarios
 
-1. Urdu food → Knowledge SOP citation → Food ticket
+1. Login supervisor → Urdu food → Knowledge citation → Food ticket
 2. Duplicate phone `03001234567` → HITL
 3. Critical medical → HITL → approve → ticket
-4. Open case detail → timeline + Export PDF
-5. Flip role switcher (Requester hides Supervisor)
+4. Case detail → timeline + Export PDF
+5. Logout → citizen login (chat-only nav)
 
 ## Do not
 
 - Hermes as orchestrator
 - Skip Integrity or Knowledge on create path
-- JWT/OAuth (use demo role switcher)
-- Vector DB / Tier C features
-- Break Tier A E2E paths
+- Open role switcher as auth source of truth (JWT is source of truth)
+- WhatsApp / marketplace / Tier C unless judges demand
+- Break Tier A/B E2E paths (tests use auth headers)

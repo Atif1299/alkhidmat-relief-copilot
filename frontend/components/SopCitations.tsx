@@ -6,6 +6,7 @@ export type SopHit = {
   excerpt?: string;
   score?: number;
   source_file?: string;
+  retrieval_mode?: string;
 };
 
 export function SopCitations({ hits }: { hits?: SopHit[] | null }) {

@@ -8,12 +8,13 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Case
 from app.db.session import get_db
+from app.deps.auth import RequireDesk
 
 router = APIRouter(prefix="/api/v1/metrics", tags=["metrics"])
 
 
 @router.get("")
-def metrics(db: Session = Depends(get_db)):
+def metrics(db: Session = Depends(get_db), _user: RequireDesk = ...):
     today = datetime.utcnow().date()
     cases = db.query(Case).all()
     cases_today = [c for c in cases if c.created_at and c.created_at.date() == today]

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Case
 from app.db.session import get_db
+from app.deps.auth import RequireDesk, RequireRequester
 from app.services.audit import list_events
 from app.services.pdf_export import build_case_pdf
 from app.services.timeline import build_timeline
@@ -41,7 +42,11 @@ def serialize_case(case: Case) -> dict:
 
 
 @router.get("")
-def list_cases(status: str | None = None, db: Session = Depends(get_db)):
+def list_cases(
+    status: str | None = None,
+    db: Session = Depends(get_db),
+    _user: RequireDesk = ...,
+):
     query = db.query(Case).order_by(Case.created_at.desc())
     if status:
         query = query.filter(Case.status == status)
@@ -49,7 +54,11 @@ def list_cases(status: str | None = None, db: Session = Depends(get_db)):
 
 
 @router.get("/{case_id}")
-def get_case(case_id: str, db: Session = Depends(get_db)):
+def get_case(
+    case_id: str,
+    db: Session = Depends(get_db),
+    _user: RequireRequester = ...,
+):
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(404, "Case not found")
@@ -60,7 +69,11 @@ def get_case(case_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{case_id}/timeline")
-def get_timeline(case_id: str, db: Session = Depends(get_db)):
+def get_timeline(
+    case_id: str,
+    db: Session = Depends(get_db),
+    _user: RequireDesk = ...,
+):
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(404, "Case not found")
@@ -75,7 +88,11 @@ def get_timeline(case_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{case_id}/export.pdf")
-def export_case_pdf(case_id: str, db: Session = Depends(get_db)):
+def export_case_pdf(
+    case_id: str,
+    db: Session = Depends(get_db),
+    _user: RequireDesk = ...,
+):
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(404, "Case not found")

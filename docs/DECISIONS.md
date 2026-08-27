@@ -101,3 +101,9 @@
 **Alternatives considered:** Pay Alibaba ECS; Vercel+Railway; GCP Compute Engine VM.  
 **Judge impact:** Live HTTPS URL + working Qwen path > blocked Alibaba VM.  
 **Status:** accepted
+
+### 2026-08-27 — Tier 3 Production Hardening (1D)
+
+**Context:** User chose local-first auth + Docker Postgres, then vector RAG; WhatsApp deferred.  
+**Decision:** Target DB = Postgres/pgvector via Compose; JWT seeded users with API role gates; DashScope embeddings + vector/keyword Knowledge; SQLite only for automated tests. Promote to Cloud SQL + Cloud Run after local green.  
+**Status:** accepted
