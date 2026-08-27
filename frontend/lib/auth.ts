@@ -21,7 +21,17 @@ export function getAuthUser(): AuthUser | null {
   const raw = window.localStorage.getItem(USER_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as AuthUser;
+    const parsed = JSON.parse(raw) as AuthUser;
+    if (
+      !parsed?.email ||
+      !parsed?.user_id ||
+      (parsed.role !== "requester" &&
+        parsed.role !== "desk" &&
+        parsed.role !== "supervisor")
+    ) {
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }

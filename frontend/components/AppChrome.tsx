@@ -3,36 +3,54 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { clearAuth, getAuthUser, getToken } from "@/lib/auth";
+import { clearAuth, getAuthUser, getToken, type AuthUser } from "@/lib/auth";
 import {
   ROLE_LINKS,
   type DeskRole,
   roleMayAccess,
 } from "@/lib/roles";
 
+function isDeskRole(value: unknown): value is DeskRole {
+  return value === "requester" || value === "desk" || value === "supervisor";
+}
+
+function readSession(): { token: string; user: AuthUser } | null {
+  const token = getToken();
+  const user = getAuthUser();
+  if (!token || !user || !isDeskRole(user.role)) {
+    if (token || user) clearAuth();
+    return null;
+  }
+  return { token, user };
+}
+
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [role, setRole] = useState<DeskRole>("desk");
+  const [role, setRole] = useState<DeskRole | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const isLogin = pathname === "/login";
 
   useEffect(() => {
-    const token = getToken();
-    const user = getAuthUser();
-    if (!token || !user) {
-      if (!isLogin) router.replace("/login");
+    const session = readSession();
+    if (!session) {
+      setRole(null);
+      setEmail(null);
       setReady(true);
+      if (!isLogin) router.replace("/login");
       return;
     }
-    setRole(user.role);
-    setEmail(user.email);
+    setRole(session.user.role);
+    setEmail(session.user.email);
     setReady(true);
+    if (isLogin) {
+      router.replace(ROLE_LINKS[session.user.role][0]?.href || "/chat");
+    }
   }, [pathname, isLogin, router]);
 
   useEffect(() => {
-    if (!ready || isLogin) return;
+    if (!ready || isLogin || !role) return;
     if (!roleMayAccess(role, pathname)) {
       router.replace(ROLE_LINKS[role][0]?.href || "/chat");
     }
@@ -40,14 +58,20 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   function logout() {
     clearAuth();
+    setRole(null);
+    setEmail(null);
     router.replace("/login");
   }
 
   if (isLogin) {
-    return <div className="shell"><div className="main">{children}</div></div>;
+    return (
+      <div className="shell">
+        <div className="main">{children}</div>
+      </div>
+    );
   }
 
-  if (!ready) {
+  if (!ready || !role) {
     return (
       <div className="shell">
         <div className="main">
@@ -57,7 +81,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const links = ROLE_LINKS[role];
+  const links = ROLE_LINKS[role] ?? ROLE_LINKS.desk;
 
   return (
     <div className="shell">

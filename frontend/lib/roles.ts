@@ -29,9 +29,11 @@ export function writeRole(role: DeskRole) {
 }
 
 export function roleMayAccess(role: DeskRole, pathname: string): boolean {
+  if (!ROLE_LINKS[role]) return false;
   if (pathname.startsWith("/cases/")) {
     return role === "desk" || role === "supervisor";
   }
+  if (pathname === "/login") return true;
   const allowed = ROLE_LINKS[role].map((l) => l.href);
   if (pathname === "/" || pathname === "") return true;
   return allowed.some((href) => pathname === href || pathname.startsWith(href + "/"));
