@@ -26,12 +26,21 @@ def _checkpoint_path() -> Path:
 
 
 async def init_graph() -> None:
-    """Open durable checkpointer (SQLite locally, Postgres on GCP)."""
+    """Open durable checkpointer.
+
+    Postgres checkpointer on Linux/Docker/GCP. On Windows, uvicorn uses
+    ProactorEventLoop which psycopg async rejects — use SQLite checkpoints
+    while the app DB remains Postgres.
+    """
     global _checkpointer, _graph, _pg_pool
     if _graph is not None:
         return
 
-    if settings.is_postgres:
+    import sys
+
+    use_postgres_checkpoint = settings.is_postgres and sys.platform != "win32"
+
+    if use_postgres_checkpoint:
         from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
         from psycopg.rows import dict_row
         from psycopg_pool import AsyncConnectionPool
@@ -56,6 +65,10 @@ async def init_graph() -> None:
 
         path = _checkpoint_path()
         path.parent.mkdir(parents=True, exist_ok=True)
+        # Prefer ./data next to backend when DB is Postgres on Windows
+        if settings.is_postgres and not settings.checkpoint_path.strip():
+            path = Path("./data/checkpoints.db")
+            path.parent.mkdir(parents=True, exist_ok=True)
         conn = await aiosqlite.connect(str(path))
         _checkpointer = AsyncSqliteSaver(conn)
         await _checkpointer.setup()

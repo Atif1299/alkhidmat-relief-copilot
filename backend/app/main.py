@@ -1,5 +1,15 @@
 """Alkhidmat Relief Copilot API — Tier 3 Production Hardening."""
 
+from __future__ import annotations
+
+import sys
+
+# psycopg async + LangGraph Postgres checkpointer need SelectorEventLoop on Windows
+if sys.platform == "win32":
+    import asyncio
+
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
