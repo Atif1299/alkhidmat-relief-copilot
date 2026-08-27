@@ -3,76 +3,75 @@
 **Event:** Alibaba Cloud AI Hackathon Pakistan 2026  
 **Theme:** AI for Pakistan's Future  
 **Host:** Alkhidmat Foundation Pakistan / Bano Qabil Platform  
-**Selection:** ~2,900 / ~16,000  
-**Status:** **Build phase — 22–27 Aug 2026** (Day 1 = today)
+**Qualification:** **Grade 1** (met every threshold at first assessment)  
+**Tools:** Qoder Enterprise Plan + special Credits (after acknowledgement)  
+**Status:** Build phase extended — **to 4 September 2026**
 
 ---
 
-## Official timeline (from emails)
+## Official timeline (UPDATED 23 Aug)
 
-| Phase | Dates | Mode | Notes |
-|-------|-------|------|-------|
-| Training | 19–20 Aug | Online, required | Qoder Quest + Qoder IDE |
-| Qoder access | 21 Aug | Email to participation address | Do not self-register that email before 21 Aug |
-| **Build** | **22–27 Aug** | Online | Core product week |
-| Regional | 28–30 Aug | In person | Karachi, Lahore, Islamabad — date TBA |
-| Judging | 31 Aug – 2 Sep | — | Finalist selection |
-| Finalist prep | 3–9 Sep | — | Polish for finale |
-| Grand Finale | 10 Sep | In person | National |
+| Phase | Dates | Notes |
+|-------|-------|-------|
+| Training | 19–20 Aug | Required; attendance verified before Qoder licence |
+| Acknowledgement | **By 24 Aug 17:00 PKT** | Form required before Qoder dispatch |
+| Qoder dispatch | **24–25 Aug** | After acknowledgement |
+| **Build** | **Until 4 September** | Online |
+| Submission portal | During build | Details TBA |
+| Regional technical evaluation | **After 4 Sep** | Dates/venues TBA |
+| Grand Finale | 10 Sep (was fixed earlier) | Confirm if still valid when organizers update |
 
-**User location:** Lahore — regional round likely local (venue TBA).
+**Superseded:** Old build end 27 Aug and regional 28–30 Aug — no longer the plan.
 
-**Official channels:** aihackathon@banoqabil.pk + Discord https://discord.gg/xfyUK45Ka
-
----
-
-## Win thesis (updated)
-
-| Pillar | Our angle | Email signal |
-|--------|-----------|--------------|
-| **Mission fit** | Alkhidmat relief workflow | Hosted by Alkhidmat; theme AI for Pakistan |
-| **Agentic AI** | Multi-agent orchestration + HITL | Training: LLMs, live building |
-| **Alibaba toolchain** | Qoder + DashScope/Qwen | Qoder access provided; Skills/MCP in training |
-| **Localization** | Urdu + English | Pakistan-first theme |
-| **Live demo** | 3-min regional presentation | Regional rounds in person |
-| **Social impact** | Measurable aid routing | Selection standards favored real problems |
+**Official channels:** aihackathon@banoqabil.pk + Discord
 
 ---
 
-## Build week plan (22–27 Aug)
+## Cursor chat sessions (workflow)
 
-### 22 Aug (Day 1) — Core backend + agents
-- M1: FastAPI + DB + seed data  
-- M2: LangGraph — Intake, Triage, Integrity, Dispatch (English E2E)
+User splits work across chats; **this mentor thread** is the master hub.
 
-### 23 Aug (Day 2) — UI + matcher
-- M3: Chat UI + ticket list  
-- Resource Matcher agent + mock inventory
+| Session purpose | Use for |
+|-----------------|---------|
+| **This chat (Hackathon project mentor)** | Organizer emails, accounts, scope, Tier order, submission, demo, pitch — **source of truth for hackathon decisions** |
+| Idea enhancements | Product definition, Tier scope, architecture choices |
+| Tier 1 implementation | Code scaffold, agents, API, UI |
+| Tier 1 requirements fulfillment | Gap fixes, DashScope, tests, polish |
+| Tier 2+ (later) | Only after Tier A E2E green |
 
-### 24 Aug (Day 3) — Safety + Urdu
-- M4: HITL supervisor screen  
-- Urdu prompts + duplicate + critical paths
-
-### 25 Aug (Day 4) — Cloud + visibility
-- DashScope/Qwen integration  
-- Agent trace in UI  
-- OSS stub (optional upload)
-
-### 26 Aug (Day 5) — Dashboard + deploy
-- Metrics dashboard  
-- Deploy API + frontend  
-- README + architecture diagram
-
-### 27 Aug (Day 6) — Submission prep buffer
-- Demo rehearsal (3 min)  
-- Deck draft  
-- **Wait for official submission format email** before final packaging
+**Rule:** Decisions from side chats must land in `docs/DECISIONS.md`, `docs/EMAIL_LOG.md`, or `docs/PRODUCT_DEFINITION.md` so this hub stays synced. Return here before submission packaging.
 
 ---
 
-## MVP scope (unchanged — optimized for 6-day build)
+## Win thesis
 
-### Must ship by 27 Aug
+| Pillar | Our angle |
+|--------|-----------|
+| **Grade 1 already earned** | Idea + qualification strong — win now on **technical implementation** |
+| **Mission fit** | Alkhidmat relief ops desk |
+| **Agentic AI** | LangGraph + specialist agents + HITL |
+| **Alibaba toolchain** | Qoder Enterprise + Qwen |
+| **Localization** | Urdu + English |
+| **Regional focus** | Technical strength, not just pitch |
+
+---
+
+## Build plan (to 4 Sep)
+
+Use time for a solid Tier A MVP, then polish — do not invent scope.
+
+| Window | Focus |
+|--------|--------|
+| Now – 25 Aug | Acknowledge form; Qoder arrives; scaffold + English E2E |
+| 26 Aug – 31 Aug | HITL, Urdu, duplicate/critical paths, agent trace |
+| 1–3 Sep | Dashboard, deploy, demo rehearsal |
+| 4 Sep | Submission portal (when shared) |
+
+---
+
+## MVP scope (Tier A)
+
+### Must ship
 
 - [ ] Web chat UI  
 - [ ] LangGraph: Intake → Triage → Integrity → Matcher → Dispatch  
@@ -80,57 +79,24 @@
 - [ ] DB + Lahore seed data  
 - [ ] Dashboard metrics  
 - [ ] Urdu + English demo paths  
-- [ ] Qwen/DashScope (Alibaba Cloud LLM)  
-- [ ] Qoder story in README (provided toolchain)
+- [ ] Qwen via Alibaba stack  
+- [ ] Build/demo story on Qoder Enterprise  
 
-### Should ship (25–26 Aug)
+### Defer unless rubric demands
 
-- [ ] Agent trace visible in UI  
-- [ ] Architecture diagram with Alibaba Cloud services  
-
-### Defer unless submission email demands
-
-- [ ] Agentic RAG  
-- [ ] WhatsApp integration  
+- [ ] Heavy Agentic RAG  
+- [ ] WhatsApp production  
 - [ ] Real Alkhidmat API  
-
----
-
-## Demo script (3 min — regional round)
-
-1. **Problem (20s)** — Aid chaos, wrong routing, duplicates  
-2. **Live (90s)** — Urdu flood/food request → agents → ticket  
-3. **Integrity (30s)** — Same phone → duplicate flagged  
-4. **Critical (30s)** — Chest pain → Supervisor approves  
-5. **Close (20s)** — Dashboard + Alibaba Cloud / Qoder architecture  
-
----
-
-## Open questions (fill from next emails)
-
-| # | Question | Source | Answer |
-|---|----------|--------|--------|
-| 1 | Official evaluation rubric / weights? | TBD | |
-| 2 | Required Alibaba Cloud products? | Partial: Qoder confirmed | |
-| 3 | Submission format (video, repo, deck)? | TBD — during build phase | |
-| 4 | Submission deadline? | TBD | |
-| 5 | Lahore regional — exact date + venue? | TBD | |
-| 6 | Prize categories? | TBD | |
-| 7 | Contents of attached Programme Schedule? | Email 3 attachment | User to share |
 
 ---
 
 ## Immediate action checklist (you)
 
-- [ ] Join Discord: https://discord.gg/xfyUK45Ka  
-- [ ] Set Discord name: **Muhammad Atif — Alkhidmat Relief Copilot — Multi-Agent Aid Desk**  
-- [ ] Read Discord code of conduct  
-- [ ] Submit training attendance forms (19 Aug + 20 Aug) if not done — use ranaatif1299@gmail.com  
-- [ ] Watch **Session 2 recording** (Skills/MCP): https://resource.alibabacloud.com/activity/webinar/detail.html?id=LS20260010  
-- [ ] Check inbox/spam for **Qoder access** email (expected 21 Aug — may be separate from recording notice)  
-- [ ] Share PDF: *Training and Programme Schedule* attachment (may contain rubric)  
-- [ ] Share remaining 2 emails when ready  
-- [ ] Say **"start build"** when ready to scaffold code
+- [ ] **TODAY: Form by 17:00 PKT** — https://forms.gle/rxdWSej496y7HtT5A  
+- [ ] Confirm both training attendance forms were submitted  
+- [ ] Do **not** create Qoder account on `ranaatif1299@gmail.com`  
+- [ ] Watch inbox 24–25 Aug for licence  
+- [ ] Say **"start build"** when ready to code  
 
 ---
 
@@ -138,8 +104,9 @@
 
 | File | Purpose |
 |------|---------|
-| `Alkhidmat_Relief_Copilot.md` | Original hackathon brief |
-| `docs/EMAIL_LOG.md` | Organizer communications |
-| `docs/EVALUATION_CRITERIA.md` | Rubric → feature mapping |
-| `docs/DECISIONS.md` | Mentor decision log |
-| `docs/ACCOUNTS_AND_PLATFORMS.md` | Accounts, Qoder rules, platform decisions |
+| `Alkhidmat_Relief_Copilot.md` | Original brief |
+| `docs/EMAIL_LOG.md` | Organizer emails |
+| `docs/EVALUATION_CRITERIA.md` | Rubric mapping |
+| `docs/ACCOUNTS_AND_PLATFORMS.md` | Accounts / Qoder |
+| `docs/DECISIONS.md` | Mentor decisions |
+| `AGENTS.md` | Product + workflow agents |
