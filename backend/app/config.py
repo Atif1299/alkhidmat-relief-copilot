@@ -22,6 +22,8 @@ class Settings(BaseSettings):
         "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
     )
     database_url: str = "sqlite:///./data/relief.db"
+    # LangGraph HITL checkpoints (survives process restart when on persistent volume)
+    checkpoint_path: str = ""
     cors_origins: str = "http://localhost:3000"
 
     @property

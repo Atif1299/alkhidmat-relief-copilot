@@ -4,19 +4,44 @@ from __future__ import annotations
 
 import time
 import uuid
-from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
-from langgraph.checkpoint.memory import MemorySaver
+import aiosqlite
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph import END, START, StateGraph
 
 from app.agents import nodes
 from app.agents.state import CaseState
+from app.config import settings
 
-_checkpointer = MemorySaver()
+_checkpointer: AsyncSqliteSaver | None = None
+_graph = None
+
+
+def _checkpoint_path() -> Path:
+    raw = settings.checkpoint_path.strip()
+    if raw:
+        return Path(raw)
+    return settings.db_path.parent / "checkpoints.db"
+
+
+async def init_graph() -> None:
+    """Open durable SQLite checkpointer (call once at app startup)."""
+    global _checkpointer, _graph
+    if _graph is not None:
+        return
+    path = _checkpoint_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = await aiosqlite.connect(str(path))
+    _checkpointer = AsyncSqliteSaver(conn)
+    await _checkpointer.setup()
+    _graph = build_graph()
 
 
 def build_graph():
+    if _checkpointer is None:
+        raise RuntimeError("Checkpointer not initialized — call await init_graph() first")
     graph = StateGraph(CaseState)
     graph.add_node("intake", nodes.intake_node)
     graph.add_node("triage", nodes.triage_node)
@@ -45,9 +70,10 @@ def build_graph():
     return graph.compile(checkpointer=_checkpointer)
 
 
-@lru_cache
 def get_graph():
-    return build_graph()
+    if _graph is None:
+        raise RuntimeError("Graph not initialized — call await init_graph() at startup")
+    return _graph
 
 
 async def run_pipeline(message: str, case_id: str | None = None) -> dict[str, Any]:

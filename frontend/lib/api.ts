@@ -1,5 +1,21 @@
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
+/**
+ * API base URL.
+ * - Unset / missing in local Next: http://localhost:8000
+ * - Empty string (Docker build ARG): same-origin relative paths via nginx (/api/...)
+ * - Explicit URL: that host
+ */
+function resolveApiUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL;
+  if (raw === "") {
+    return "";
+  }
+  if (raw == null || raw === undefined) {
+    return "http://localhost:8000";
+  }
+  return raw.replace(/\/$/, "");
+}
+
+export const API_URL = resolveApiUrl();
 
 export type AgentStep = {
   agent: string;

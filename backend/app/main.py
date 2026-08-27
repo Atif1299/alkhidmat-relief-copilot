@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.agents.graph import init_graph
 from app.api import cases, chat, metrics, supervisor
 from app.config import settings
 from app.db.seed import run_seed
@@ -14,6 +15,7 @@ from app.db.session import init_db
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
+    await init_graph()
     info = run_seed()
     print(f"[startup] DB ready: {info}")
     yield
@@ -29,7 +31,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
-    allow_credentials=True,
+    allow_credentials="*" not in settings.cors_origin_list,
     allow_methods=["*"],
     allow_headers=["*"],
 )
