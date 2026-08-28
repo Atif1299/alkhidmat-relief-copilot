@@ -7,7 +7,10 @@ import { clearAuth, getAuthUser, getToken, type AuthUser } from "@/lib/auth";
 import {
   ROLE_LINKS,
   type DeskRole,
+  isPublicPath,
+  navLinkActive,
   roleMayAccess,
+  staffHome,
 } from "@/lib/roles";
 
 function isDeskRole(value: unknown): value is DeskRole {
@@ -30,7 +33,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<DeskRole | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const isLogin = pathname === "/login";
+  const publicRoute = isPublicPath(pathname);
 
   useEffect(() => {
     const session = readSession();
@@ -38,35 +41,49 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
       setRole(null);
       setEmail(null);
       setReady(true);
-      if (!isLogin) router.replace("/login");
+      if (!publicRoute) router.replace("/login");
       return;
     }
     setRole(session.user.role);
     setEmail(session.user.email);
     setReady(true);
-    if (isLogin) {
-      router.replace(ROLE_LINKS[session.user.role][0]?.href || "/chat");
+    if (pathname === "/login") {
+      router.replace(staffHome(session.user.role));
     }
-  }, [pathname, isLogin, router]);
+  }, [pathname, publicRoute, router]);
 
   useEffect(() => {
-    if (!ready || isLogin || !role) return;
+    if (!ready || publicRoute || !role) return;
     if (!roleMayAccess(role, pathname)) {
-      router.replace(ROLE_LINKS[role][0]?.href || "/chat");
+      router.replace(staffHome(role));
     }
-  }, [ready, role, pathname, router, isLogin]);
+  }, [ready, role, pathname, router, publicRoute]);
 
   function logout() {
     clearAuth();
     setRole(null);
     setEmail(null);
-    router.replace("/login");
+    router.replace("/");
   }
 
-  if (isLogin) {
+  if (publicRoute) {
     return (
       <div className="shell">
-        <div className="main">{children}</div>
+        <header className="topbar public-topbar">
+          <Link href="/" className="brand">
+            Alkhidmat Relief Copilot
+            <span>Aid Desk</span>
+          </Link>
+          <nav className="nav public-nav">
+            <Link href="/request" className={pathname === "/request" ? "active" : undefined}>
+              Request aid
+            </Link>
+            <Link href="/login" className={pathname === "/login" ? "active" : "nav-cta"}>
+              Staff sign in
+            </Link>
+          </nav>
+        </header>
+        <div className={pathname === "/" ? "main main-wide" : "main"}>{children}</div>
       </div>
     );
   }
@@ -86,10 +103,10 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   return (
     <div className="shell">
       <header className="topbar">
-        <div className="brand">
+        <Link href={staffHome(role)} className="brand">
           Alkhidmat Relief Copilot
-          <span>Aid Desk · Multi-Agent Ops · Tier 3</span>
-        </div>
+          <span>Aid Desk</span>
+        </Link>
         <div className="topbar-right">
           <span className="role-switch">
             <span>{email}</span>
@@ -103,7 +120,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
               <Link
                 key={l.href}
                 href={l.href}
-                className={pathname === l.href ? "active" : undefined}
+                className={navLinkActive(pathname, l.href) ? "active" : undefined}
               >
                 {l.label}
               </Link>
