@@ -18,6 +18,13 @@ type CaseRow = {
   duplicate_flag?: boolean;
 };
 
+function statusBadge(status: string) {
+  if (status === "dispatched") return "ok";
+  if (status === "pending_hitl") return "warn";
+  if (status === "rejected") return "danger";
+  return "neutral";
+}
+
 export default function TicketsPage() {
   const [cases, setCases] = useState<CaseRow[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -45,91 +52,91 @@ export default function TicketsPage() {
           Refresh
         </button>
       </div>
-      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
       <div className="panel">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Ticket</th>
-              <th>Status</th>
-              <th>Category</th>
-              <th>Location</th>
-              <th>Phone</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {cases.map((c) => (
-              <Fragment key={c.id}>
-                <tr>
-                  <td>
-                    <Link href={`/cases/${c.id}`}>
-                      <strong>{c.ticket_id || "—"}</strong>
-                    </Link>
-                    <div className="muted" style={{ maxWidth: 220 }}>
-                      {c.raw_message.slice(0, 80)}
-                    </div>
-                  </td>
-                  <td>
-                    <span
-                      className={`badge ${
-                        c.status === "dispatched"
-                          ? "ok"
-                          : c.status === "pending_hitl"
-                            ? "warn"
-                            : c.status === "rejected"
-                              ? "danger"
-                              : "neutral"
-                      }`}
-                    >
-                      {c.status}
-                    </span>
-                    {c.duplicate_flag ? " !" : ""}
-                  </td>
-                  <td>
-                    {c.category}
-                    <div className="muted">{c.priority}</div>
-                  </td>
-                  <td>{c.location}</td>
-                  <td>{c.requester_phone}</td>
-                  <td>
-                    <div className="actions">
-                      <Link className="chip" href={`/cases/${c.id}`}>
-                        Detail
-                      </Link>
-                      <button
-                        className="chip"
-                        type="button"
-                        onClick={() => setExpanded(expanded === c.id ? null : c.id)}
-                      >
-                        Trace
-                      </button>
-                      <button
-                        className="chip"
-                        type="button"
-                        onClick={() =>
-                          downloadCasePdf(c.id, `${c.ticket_id || c.id}.pdf`).catch(() =>
-                            setError("PDF export failed")
-                          )
-                        }
-                      >
-                        PDF
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                {expanded === c.id && (
+        {!cases.length && !error ? (
+          <div className="empty-state">
+            <p className="muted">No tickets yet. Citizens submit from Request aid — or run a test intake.</p>
+            <Link className="btn" href="/chat">
+              Open test intake
+            </Link>
+          </div>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Status</th>
+                <th>Category</th>
+                <th>Location</th>
+                <th>Phone</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {cases.map((c) => (
+                <Fragment key={c.id}>
                   <tr>
-                    <td colSpan={6}>
-                      <AgentTrace steps={c.agent_trace || []} />
+                    <td>
+                      <Link href={`/cases/${c.id}`}>
+                        <strong>{c.ticket_id || "—"}</strong>
+                      </Link>
+                      <div className="muted" style={{ maxWidth: 220 }}>
+                        {c.raw_message.slice(0, 80)}
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`badge ${statusBadge(c.status)}`}>{c.status}</span>
+                      {c.duplicate_flag ? (
+                        <span className="badge warn" style={{ marginLeft: 4 }}>
+                          dup
+                        </span>
+                      ) : null}
+                    </td>
+                    <td>
+                      {c.category}
+                      <div className="muted">{c.priority}</div>
+                    </td>
+                    <td>{c.location}</td>
+                    <td>{c.requester_phone}</td>
+                    <td>
+                      <div className="actions">
+                        <Link className="chip" href={`/cases/${c.id}`}>
+                          Detail
+                        </Link>
+                        <button
+                          className="chip"
+                          type="button"
+                          onClick={() => setExpanded(expanded === c.id ? null : c.id)}
+                        >
+                          Trace
+                        </button>
+                        <button
+                          className="chip"
+                          type="button"
+                          onClick={() =>
+                            downloadCasePdf(c.id, `${c.ticket_id || c.id}.pdf`).catch(() =>
+                              setError("PDF export failed")
+                            )
+                          }
+                        >
+                          PDF
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                )}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
-        {!cases.length && !error && <p className="muted">No tickets yet.</p>}
+                  {expanded === c.id && (
+                    <tr>
+                      <td colSpan={6}>
+                        <AgentTrace steps={c.agent_trace || []} />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

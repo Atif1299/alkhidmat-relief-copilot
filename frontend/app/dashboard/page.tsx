@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import { getAuthUser } from "@/lib/auth";
 import { getMetrics } from "@/lib/api";
 
 type Metrics = {
@@ -16,6 +18,7 @@ type Metrics = {
 export default function DashboardPage() {
   const [m, setM] = useState<Metrics | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSupervisor, setIsSupervisor] = useState(false);
 
   async function load() {
     try {
@@ -27,6 +30,7 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
+    setIsSupervisor(getAuthUser()?.role === "supervisor");
     load();
     const t = setInterval(load, 8000);
     return () => clearInterval(t);
@@ -35,13 +39,21 @@ export default function DashboardPage() {
   return (
     <div>
       <h1>Ops dashboard</h1>
-      <p className="muted">Impact visible — cases, speed, and escalations for judges and desk leads.</p>
+      <p className="muted">Cases, speed, and escalations — so the desk knows what needs attention.</p>
       <div className="actions" style={{ margin: "0.75rem 0" }}>
         <button className="btn secondary" type="button" onClick={load}>
           Refresh
         </button>
+        <Link className="btn secondary" href="/tickets">
+          Open tickets
+        </Link>
+        {isSupervisor && m && m.pending_hitl > 0 ? (
+          <Link className="btn warn" href="/supervisor">
+            Review {m.pending_hitl} pending
+          </Link>
+        ) : null}
       </div>
-      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
       {m && (
         <>
           <div className="metrics">

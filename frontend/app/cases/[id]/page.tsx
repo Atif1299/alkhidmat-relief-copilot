@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AgentTrace } from "@/components/AgentTrace";
 import { CaseTimeline, type TimelineStage } from "@/components/CaseTimeline";
 import { SopCitations, type SopHit } from "@/components/SopCitations";
+import { getAuthUser } from "@/lib/auth";
 import {
   downloadCasePdf,
   getCase,
@@ -37,8 +38,10 @@ export default function CaseDetailPage() {
   const caseId = String(params.id || "");
   const [data, setData] = useState<CaseDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSupervisor, setIsSupervisor] = useState(false);
 
   useEffect(() => {
+    setIsSupervisor(getAuthUser()?.role === "supervisor");
     if (!caseId) return;
     getCase(caseId)
       .then(setData)
@@ -48,7 +51,7 @@ export default function CaseDetailPage() {
   if (error) {
     return (
       <div>
-        <p style={{ color: "var(--danger)" }}>{error}</p>
+        <p className="error">{error}</p>
         <Link href="/tickets">Back to tickets</Link>
       </div>
     );
@@ -80,10 +83,13 @@ export default function CaseDetailPage() {
         >
           Export PDF
         </button>
-        {data.status === "pending_hitl" && (
+        {data.status === "pending_hitl" && isSupervisor && (
           <Link className="btn secondary" href="/supervisor">
             Open supervisor
           </Link>
+        )}
+        {data.status === "pending_hitl" && !isSupervisor && (
+          <span className="badge warn">Waiting for supervisor</span>
         )}
       </div>
 

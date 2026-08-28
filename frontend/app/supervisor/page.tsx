@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AgentTrace } from "@/components/AgentTrace";
 import { decideCase, getSupervisorQueue, type AgentStep } from "@/lib/api";
@@ -33,6 +34,8 @@ export default function SupervisorPage() {
 
   useEffect(() => {
     load();
+    const t = setInterval(load, 12000);
+    return () => clearInterval(t);
   }, []);
 
   async function onDecide(id: string, decision: "approve" | "reject") {
@@ -54,16 +57,30 @@ export default function SupervisorPage() {
         Critical and high-risk cases pause here until a human approves or rejects.
       </p>
       <div className="panel" style={{ marginTop: "1rem", marginBottom: "1rem" }}>
-        <label className="muted">Decision note</label>
-        <input value={note} onChange={(e) => setNote(e.target.value)} />
+        <label htmlFor="decision-note" className="muted">
+          Decision note
+        </label>
+        <input
+          id="decision-note"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          style={{ marginTop: "0.35rem" }}
+        />
       </div>
       <div className="actions" style={{ marginBottom: "0.75rem" }}>
         <button className="btn secondary" type="button" onClick={load}>
           Refresh queue
         </button>
       </div>
-      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
-      {!queue.length && !error && <p className="muted">No pending cases.</p>}
+      {error && <p className="error">{error}</p>}
+      {!queue.length && !error && (
+        <div className="panel empty-state">
+          <p className="muted">No pending cases. Queue is clear.</p>
+          <Link className="btn secondary" href="/tickets">
+            View tickets
+          </Link>
+        </div>
+      )}
       <div style={{ display: "grid", gap: "0.85rem" }}>
         {queue.map((item) => (
           <article key={item.id} className="panel">
@@ -73,12 +90,19 @@ export default function SupervisorPage() {
                   {item.priority}
                 </span>{" "}
                 <strong>{item.category}</strong>
-                {item.duplicate_flag ? " · duplicate" : ""}
+                {item.duplicate_flag ? (
+                  <span className="badge warn" style={{ marginLeft: 6 }}>
+                    duplicate
+                  </span>
+                ) : null}
                 <div className="muted">
                   Risk {(item.risk_score ?? 0).toFixed(2)} · {item.location} · {item.requester_phone}
                 </div>
               </div>
               <div className="actions">
+                <Link className="chip" href={`/cases/${item.id}`}>
+                  Case detail
+                </Link>
                 <button
                   className="btn"
                   type="button"
