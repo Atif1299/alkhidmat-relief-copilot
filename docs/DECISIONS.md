@@ -102,6 +102,36 @@
 **Judge impact:** Live HTTPS URL + working Qwen path > blocked Alibaba VM.  
 **Status:** accepted
 
+### 2026-08-28 — Qoder lab practices applied to Aid Desk (product unchanged)
+
+**Context:** Discord Qoder AI Coding Hands-on Lab (Spring Boot order demo). Build phase closes 4 Sep.  
+**Decision:** Do **not** rebuild Alkhidmat as the Java order system or microservices. Steal lab practices on **this** repo: input validation, AI-assisted code review on auth/Integrity/chat, architecture story, tests, light GitHub Actions CI — then GCP redeploy.  
+**Judge impact:** Shows production hygiene without diluting the NGO aid-desk demo.  
+**Status:** accepted
+
+### 2026-08-28 — Product polish IA (public request + staff JWT)
+
+**Context:** Login-first UX blocked citizens; Tier 3 JWT already shipped.  
+**Decision:** `/` landing; `/request` anonymous; `/login` staff-only (Desk/Supervisor); guest `POST /chat`; staff home `/tickets`.  
+**Status:** accepted
+
+### 2026-08-28 — Code review findings (auth / Integrity / chat)
+
+**Reviewed:** `deps/auth.py`, `api/auth.py`, `api/chat.py`, `api/supervisor.py`, graph Integrity edge.  
+**Findings + fixes:**
+
+| Finding | Fix |
+|---------|-----|
+| Chat required JWT — blocked public citizens | `OptionalChatUser` / guest allowed on `/chat` |
+| Weak default JWT silent in prod-like Postgres | Startup WARNING if `JWT_SECRET` missing/default |
+| Startup logged full seed dict (incl. demo password hint) | Log resource/user counts only |
+| Decide `case_id` / `note` weakly validated | UUID path check; note max 1000; strip blanks |
+| Chat/login payloads weakly validated | Strip message; EmailStr + normalize; oversized/blank → 422 |
+| Integrity skip risk | Confirmed graph always `knowledge → integrity` (no change) |
+| Guest accessing ops APIs | Cases/supervisor/metrics still RequireDesk/Supervisor → 401 |
+
+**Status:** accepted
+
 ### 2026-08-27 — Tier 3 Production Hardening (1D)
 
 **Context:** User chose local-first auth + Docker Postgres, then vector RAG; WhatsApp deferred.  

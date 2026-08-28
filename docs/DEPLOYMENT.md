@@ -40,10 +40,14 @@ Active plan copy: [.cursor/gcp_cloud_run_deploy.plan.md](../.cursor/gcp_cloud_ru
 ### Tier 3 promote checklist
 
 1. Cloud SQL: enable `vector` extension (`CREATE EXTENSION vector;`).
-2. Secret Manager: add `jwt-secret` (map to `JWT_SECRET` on Cloud Run).
+2. Secret Manager: add `jwt-secret` (map to `JWT_SECRET` on Cloud Run) — **required**; deploy script creates if missing.
 3. Redeploy API/web via `deploy/gcp/03_build_and_deploy.sh`.
-4. Confirm `/health` shows `"tier": "3"` and login works on live URL.
-5. Reindex SOPs (startup embeds when `DASHSCOPE_API_KEY` set and chunks lack embeddings).
+4. Confirm `/health` shows `"tier": "3"` and staff login works on live URL.
+5. Confirm **public** aid path: open live web `/request`, submit without login (API guest `POST /chat` must not require JWT).
+6. Reindex SOPs (startup embeds when `DASHSCOPE_API_KEY` set and chunks lack embeddings).
+7. CORS: deploy script sets `CORS_ORIGINS` to the live web URL after web deploy.
+
+**Product IA on live:** Landing `/` → Request aid (guest) or Staff sign in (JWT). Ops routes stay authenticated.
 
 ---
 

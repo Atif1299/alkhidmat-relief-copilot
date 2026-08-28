@@ -1,52 +1,54 @@
-# Demo Script — Alkhidmat Relief Copilot (3 minutes + Tier 3 auth)
+# Demo Script — Alkhidmat Relief Copilot (3 minutes)
 
 ## Setup
 
 1. Postgres: `docker compose up -d db` (or full stack `docker compose up`)
 2. Backend: `cd backend && .venv\Scripts\activate && set LLM_MODE=mock && uvicorn app.main:app --reload --port 8000`
 3. Frontend: `cd frontend && npm run dev`
-4. Open http://localhost:3000/login — password for all demo users: `AidDesk!2026`
+4. Open http://localhost:3000 — **landing** (not login)
 
-| Email | Role |
-|-------|------|
-| supervisor@aiddesk.example | Supervisor (full ops + HITL) |
-| desk@aiddesk.example | Desk (tickets, dashboard, PDF) |
-| citizen@aiddesk.example | Requester (chat only) |
+| Email | Role | Use |
+|-------|------|-----|
+| desk@aiddesk.example | Desk | Tickets, dashboard, PDF |
+| supervisor@aiddesk.example | Supervisor | Full ops + HITL |
+| Password (both) | | `AidDesk!2026` |
+
+Citizens do **not** log in — they use **Request aid**.
 
 ## Script
 
-### 1. Problem (20s)
+### 1. Problem (15s)
 
 Aid requests hit NGOs as messy Urdu/English messages — wrong routing, duplicates, missed critical medical cases.
 
-### 2. Login + happy path (70s)
+### 2. Landing + citizen path (70s)
 
-Login as **supervisor@aiddesk.example**. Open **Chat**. Click chip **Urdu · Food** (or paste):
+Open **/**. Point to dual CTAs: **Request aid** vs **Staff sign in**.
+
+Click **Request aid**. Show live **pipeline strip**. Click chip **Urdu · Food** (or paste):
 
 > Flood ke baad khane ki zaroorat hai, Township Lahore, family of 5. Phone 03017654321
 
-Click **Run desk pipeline**. Point to **Agent trace**:
-Intake → Triage → **Knowledge** → Integrity → Matcher → Dispatch → ticket ID.
+Click **Submit request**. Point to **Agent trace**:
+Intake → Triage → **Knowledge** → Integrity → Matcher → Dispatch → **ticket ID** above the fold.
 
-Show **Sources / SOPs used** citations. If DashScope embeddings are configured, Knowledge shows vector retrieval in the trace (`via vector`); otherwise keyword fallback.
+Show **SOP citations**. No login required.
 
-### 3. Integrity (25s)
+### 3. Integrity / HITL (40s)
 
-Run **EN · Duplicate** chip (phone `03001234567`). Show status `pending_hitl` and duplicate flag. Open **Supervisor**.
+Still on Request aid (or staff Test intake), run **EN · Duplicate** or **Critical · Medical**. Show status **Waiting for supervisor**.
 
-### 4. Critical + HITL (25s)
+**Staff sign in** as `supervisor@aiddesk.example`. Land on **Tickets**. Open **Supervisor**, **Approve**. Show ticket created. Open **Dashboard** — cases, time-to-ticket, pending HITL.
 
-From Chat, run **Critical · Medical**. Go to **Supervisor**, **Approve**. Show ticket created. Open **Dashboard** — cases, time-to-ticket, escalation %.
+### 4. Ops beat (30s)
 
-### 5. Ops beat + role proof (30s)
-
-1. Open the case from **Tickets** (or `/cases/{id}`).
+1. Open the case from **Tickets** (or case detail).
 2. Show **status timeline** and SOP citations.
 3. Click **Export PDF**.
-4. **Logout** → login as **citizen@aiddesk.example** — nav is chat-only; Tickets/Supervisor/Dashboard hidden. Logout → login as **supervisor** again for full ops.
+4. Optional: logout → landing → prove citizen path still works without staff nav.
 
-Narrative: *Governed agents + real JWT roles + Alkhidmat SOPs — not a chatbot.*
+Narrative: *Citizen submits without an account → desk sees a verified ticket → supervisor only when needed.*
 
-### 6. Close (15s)
+### 5. Close (15s)
 
-Stack: LangGraph multi-agent + Qwen/DashScope (+ embeddings) + FastAPI + Postgres/pgvector + Next.js — Alkhidmat-scale ops with human approval for high risk.
+Stack: LangGraph multi-agent + Qwen/DashScope + FastAPI + Postgres/pgvector + Next.js — Alkhidmat-scale ops with human approval for high risk.
