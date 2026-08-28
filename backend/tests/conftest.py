@@ -17,7 +17,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def client():
     from app.config import get_settings
 
@@ -27,18 +27,30 @@ def client():
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
-    # Force no embeddings in tests (keyword RAG path). Mutate in place so
-    # `from app.config import settings` aliases in other modules see it.
+    # Mutate the shared settings object in place so other modules' `settings` aliases update.
     config_mod.settings = get_settings()
-    config_mod.settings.dashscope_api_key = ""
-    config_mod.settings.llm_mode = "mock"
-    config_mod.settings.auth_disabled = False
-    config_mod.settings.database_url = "sqlite:///./data/test_tier3.db"
+    s = config_mod.settings
+    s.dashscope_api_key = ""
+    s.llm_mode = "mock"
+    s.auth_disabled = False
+    s.database_url = "sqlite:///./data/test_tier3.db"
 
     Path("./data").mkdir(parents=True, exist_ok=True)
     test_db = Path("./data/test_tier3.db")
+    if session_mod.engine is not None:
+        session_mod.engine.dispose()
     if test_db.exists():
-        test_db.unlink()
+        try:
+            test_db.unlink()
+        except PermissionError:
+            # Fall back to a fresh file if Windows still locks the old one.
+            test_db = Path("./data/test_tier3_session.db")
+            s.database_url = f"sqlite:///{test_db.as_posix()}"
+            if test_db.exists():
+                try:
+                    test_db.unlink()
+                except PermissionError:
+                    pass
 
     session_mod.engine = create_engine(
         f"sqlite:///{test_db.as_posix()}",
@@ -56,9 +68,10 @@ def client():
     run_seed()
     with TestClient(app) as test_client:
         yield test_client
+    session_mod.engine.dispose()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def auth_headers(client):
     """Supervisor token for full API access."""
     r = client.post(
@@ -70,21 +83,21 @@ def auth_headers(client):
     return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def citizen_headers(client):
     r = client.post(
         "/api/v1/auth/login",
         json={"email": "citizen@aiddesk.example", "password": "AidDesk!2026"},
     )
-    assert r.status_code == 200
+    assert r.status_code == 200, r.text
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def desk_headers(client):
     r = client.post(
         "/api/v1/auth/login",
         json={"email": "desk@aiddesk.example", "password": "AidDesk!2026"},
     )
-    assert r.status_code == 200
+    assert r.status_code == 200, r.text
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
