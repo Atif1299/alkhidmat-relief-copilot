@@ -1,0 +1,31 @@
+name: Backend tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run pytest
+        env:
+          DATABASE_URL: sqlite:///./data/test_tier3.db
+          LLM_MODE: mock
+          AUTH_DISABLED: "false"
+          JWT_SECRET: test-jwt-secret-aiddesk-tier3-32chars
+          DASHSCOPE_API_KEY: __tests_no_dashscope__
+        run: python -m pytest -q --tb=short
