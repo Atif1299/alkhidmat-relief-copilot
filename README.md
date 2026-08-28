@@ -1,19 +1,23 @@
 <p align="center">
-  <img src="docs/assets/readme-banner.png" alt="Alkhidmat Relief Copilot" width="920" />
+  <img src="docs/assets/readme-banner.png" alt="Alkhidmat Relief Copilot — DashScope Qwen · Alibaba Cloud AI Hackathon" width="920" />
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Next.js-14-black?style=flat&logo=nextdotjs&logoColor=white" alt="Next.js 14" />
-  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react&logoColor=black" alt="React 18" />
-  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript 5" />
-  <img src="https://img.shields.io/badge/FastAPI-PYTHON-009688?style=flat&logo=fastapi&logoColor=white" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/LangGraph-AGENTS-1C3C3C?style=flat&logo=langchain&logoColor=white" alt="LangGraph" />
+  <img src="https://img.shields.io/badge/NEXT.JS-14-black?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js 14" />
+  <img src="https://img.shields.io/badge/REACT-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 18" />
+  <img src="https://img.shields.io/badge/TYPESCRIPT-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript 5" />
+  <img src="https://img.shields.io/badge/FASTAPI-PYTHON-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/LANGGRAPH-AGENTS-111827?style=for-the-badge" alt="LangGraph" />
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?style=flat&logo=postgresql&logoColor=white" alt="PostgreSQL pgvector" />
-  <img src="https://img.shields.io/badge/Qwen-DashScope-FF6A00?style=flat&logo=alibabacloud&logoColor=white" alt="Qwen DashScope" />
-  <img src="https://img.shields.io/badge/Google%20Cloud-RUN-4285F4?style=flat&logo=googlecloud&logoColor=white" alt="Google Cloud Run" />
+  <img src="https://img.shields.io/badge/QWEN-DASHSCOPE-FF6A00?style=for-the-badge&logo=alibabacloud&logoColor=white" alt="Qwen via DashScope" />
+  <img src="https://img.shields.io/badge/ALIBABA%20CLOUD-AI%20HACKATHON-FF6A00?style=for-the-badge&logo=alibabacloud&logoColor=white" alt="Alibaba Cloud AI Hackathon" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/POSTGRES-PGVECTOR-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL pgvector" />
+  <img src="https://img.shields.io/badge/GOOGLE%20CLOUD-RUN-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Google Cloud Run" />
 </p>
 
 <p align="center">
@@ -32,7 +36,7 @@
 
 ## What is Alkhidmat Relief Copilot?
 
-**Alkhidmat Relief Copilot** is an **NGO aid desk SaaS** (not a chatbot) for Alibaba Cloud AI Hackathon Pakistan 2026. Citizens submit needs on a public request page; a **LangGraph** pipeline runs **Intake → Triage → Knowledge → Integrity → Matcher → Dispatch**, with a **HITL supervisor gate** for critical or high-risk cases. Staff sign in to tickets, agent traces, metrics, and PDF export — on **FastAPI + Next.js 14 + Postgres/pgvector + Qwen (DashScope)**, live on **Google Cloud Run**.
+**Alkhidmat Relief Copilot** is an **NGO aid desk SaaS** (not a chatbot) built for **Alibaba Cloud AI Hackathon Pakistan 2026**, powered by **Qwen via DashScope**. Citizens submit needs on a public request page; a **LangGraph** pipeline runs **Intake → Triage → Knowledge → Integrity → Matcher → Dispatch**, with a **HITL supervisor gate** for critical or high-risk cases. Staff sign in to tickets, agent traces, metrics, and PDF export — on **FastAPI + Next.js 14 + Postgres/pgvector**, live on **Google Cloud Run**.
 
 ## Capabilities
 
