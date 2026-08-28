@@ -1,22 +1,49 @@
-# Alkhidmat Relief Copilot
+<p align="center">
+  <img src="docs/assets/readme-banner.png" alt="Alkhidmat Relief Copilot" width="920" />
+</p>
 
-Multi-agent AI aid desk for relief NGOs — Alibaba Cloud AI Hackathon Pakistan 2026.
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-14-black?style=flat&logo=nextdotjs&logoColor=white" alt="Next.js 14" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react&logoColor=black" alt="React 18" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript 5" />
+  <img src="https://img.shields.io/badge/FastAPI-PYTHON-009688?style=flat&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/LangGraph-AGENTS-1C3C3C?style=flat&logo=langchain&logoColor=white" alt="LangGraph" />
+</p>
 
-> A multi-agent AI desk that turns an aid request (Urdu/English) into a verified, routed relief ticket — with human approval for high-risk cases.
+<p align="center">
+  <img src="https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?style=flat&logo=postgresql&logoColor=white" alt="PostgreSQL pgvector" />
+  <img src="https://img.shields.io/badge/Qwen-DashScope-FF6A00?style=flat&logo=alibabacloud&logoColor=white" alt="Qwen DashScope" />
+  <img src="https://img.shields.io/badge/Google%20Cloud-RUN-4285F4?style=flat&logo=googlecloud&logoColor=white" alt="Google Cloud Run" />
+</p>
 
-## Status
+<p align="center">
+  A multi-agent AI desk that turns an aid request (Urdu/English) into a verified, routed relief ticket — with human approval for high-risk cases.
+</p>
 
-**Tier A complete** — LangGraph Aid Desk with HITL, agent trace UI, metrics, and E2E tests.
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#capabilities">Capabilities</a> ·
+  <a href="#project-layout">Project layout</a> ·
+  <a href="#deploy">Deploy</a> ·
+  <a href="#docs">Docs</a>
+</p>
 
-## Stack
+---
 
-| Layer | Technology |
-|-------|------------|
-| Orchestration | LangGraph |
-| LLM | Qwen (DashScope) / mock mode |
-| API | FastAPI + SSE |
-| UI | Next.js 14 |
-| DB | SQLite |
+## What is Alkhidmat Relief Copilot?
+
+**Alkhidmat Relief Copilot** is an **NGO aid desk SaaS** (not a chatbot) for Alibaba Cloud AI Hackathon Pakistan 2026. Citizens submit needs on a public request page; a **LangGraph** pipeline runs **Intake → Triage → Knowledge → Integrity → Matcher → Dispatch**, with a **HITL supervisor gate** for critical or high-risk cases. Staff sign in to tickets, agent traces, metrics, and PDF export — on **FastAPI + Next.js 14 + Postgres/pgvector + Qwen (DashScope)**, live on **Google Cloud Run**.
+
+## Capabilities
+
+- **Public request path** — `/` landing → `/request` guest intake (no citizen account)
+- **Staff ops** — JWT roles (desk / supervisor); home `/tickets`
+- **Agent trace** — every step visible in the UI
+- **Integrity** — duplicate / risk checks; never skipped on create
+- **HITL** — approve / reject critical or high-risk cases
+- **Light RAG** — SOP retrieval (keyword + pgvector when available)
+- **Urdu + English** — live intake and notifications
+- **Metrics + PDF** — desk dashboard and case export
 
 ## Quick start
 
@@ -42,7 +69,7 @@ copy .env.local.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000/chat
+Open **http://localhost:3000/** (public landing). Citizens use **/request**; staff use **/login**.
 
 ### Tests
 
@@ -54,26 +81,45 @@ pytest -q
 
 ## Demo paths
 
-1. Urdu food request → Food ticket + resource match  
-2. Duplicate phone `03001234567` → HITL pending  
+1. Urdu/English food request → Food ticket + resource match  
+2. Duplicate phone → HITL pending  
 3. Critical medical → Supervisor approve → ticket  
 
 See [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
+
+## Project layout
+
+```
+backend/          FastAPI, LangGraph agents, tools, JWT auth
+frontend/         Next.js 14 App Router (public + staff IA)
+docs/             Product, architecture, demo, deployment
+deploy/gcp/       Cloud Run + Cloud SQL promote scripts
+.github/workflows Backend pytest CI
+```
+
+## Deploy
+
+| Surface | URL |
+|---------|-----|
+| **Live Web** | https://relief-web-4idrhaffca-el.a.run.app |
+| **Live API** | https://relief-api-4idrhaffca-el.a.run.app |
+
+Promote checklist and secrets: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Local Compose: `docker-compose.yml` (Postgres/pgvector + api + web).
 
 ## Docs
 
 | Doc | Purpose |
 |-----|---------|
 | [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) | Product + Tier A/B/C |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design + public/staff IA |
 | [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) | 3-minute demo |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | GCP / env checklist |
 | [AGENTS.md](AGENTS.md) | Product agents |
 
 ## Alibaba Cloud
 
-- **DashScope / Qwen** — set `DASHSCOPE_API_KEY` and `LLM_MODE=qwen`
-- **Qoder** — official hackathon IDE (Skills / MCP narrative)
-- Deploy API on ECS / Function Compute; frontend on Vercel or static host
+- **DashScope / Qwen** — `DASHSCOPE_API_KEY` and `LLM_MODE=qwen`
+- **Qoder** — hackathon IDE (Skills / MCP narrative)
 
 ## Repo
 
