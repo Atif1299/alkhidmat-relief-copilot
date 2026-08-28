@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AgentTrace } from "@/components/AgentTrace";
+import { PipelineStrip } from "@/components/PipelineStrip";
 import { SopCitations } from "@/components/SopCitations";
 import { chatStream, type AgentStep, type ChatResult } from "@/lib/api";
-import Link from "next/link";
 
 const SAMPLES = [
   {
@@ -21,6 +22,7 @@ const SAMPLES = [
   },
 ];
 
+/** Staff-only test intake — citizens use /request. */
 export default function ChatPage() {
   const [message, setMessage] = useState(SAMPLES[0].text);
   const [steps, setSteps] = useState<AgentStep[]>([]);
@@ -55,11 +57,15 @@ export default function ChatPage() {
 
   return (
     <div>
-      <h1>Citizen intake</h1>
+      <h1>Test intake</h1>
       <p className="muted">
-        Submit Urdu or English aid requests. Watch Intake → Triage → Knowledge → Integrity → Matcher
-        → Dispatch run live.
+        Staff sandbox for the same pipeline citizens use on{" "}
+        <Link href="/request">Request aid</Link>.
       </p>
+
+      <div className="pipeline-wrap panel" style={{ marginTop: "1rem" }}>
+        <PipelineStrip steps={steps} busy={busy} status={result?.status} />
+      </div>
 
       <div className="grid-2" style={{ marginTop: "1rem" }}>
         <section className="panel">
@@ -77,7 +83,7 @@ export default function ChatPage() {
               {busy ? "Agents running…" : "Run desk pipeline"}
             </button>
           </div>
-          {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
+          {error && <p className="error">{error}</p>}
           {result && (
             <div style={{ marginTop: "1rem" }}>
               <span
@@ -104,7 +110,7 @@ export default function ChatPage() {
               )}
               {result.status === "pending_hitl" && (
                 <p>
-                  Waiting for supervisor — open <a href="/supervisor">Supervisor</a>.
+                  Waiting for supervisor — open <Link href="/supervisor">Supervisor</Link>.
                 </p>
               )}
               <h3 style={{ marginTop: "1rem" }}>SOP citations</h3>
