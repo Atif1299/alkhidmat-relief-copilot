@@ -15,6 +15,21 @@ def test_health(client):
     assert r.json().get("auth_required") is True
 
 
+def test_anonymous_chat_allowed(client):
+    """Public /request path — no JWT required for intake."""
+    phone = f"0301{uuid.uuid4().hex[:7]}"
+    r = client.post(
+        "/api/v1/chat/sync",
+        json={
+            "message": f"Flood ke baad khane ki zaroorat hai, Township Lahore. Phone {phone}"
+        },
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body.get("case_id")
+    assert body.get("status") in ("dispatched", "pending_hitl")
+
+
 def test_anonymous_supervisor_forbidden(client):
     r = client.get("/api/v1/supervisor/queue")
     assert r.status_code == 401
