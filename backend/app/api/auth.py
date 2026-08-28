@@ -3,20 +3,16 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.models import User
 from app.db.session import get_db
 from app.deps.auth import get_current_user
+from app.schemas import LoginRequest
 from app.services.security import create_access_token, verify_password
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
-
-
-class LoginRequest(BaseModel):
-    email: str = Field(min_length=3, max_length=256)
-    password: str = Field(min_length=4, max_length=128)
 
 
 class TokenResponse(BaseModel):
@@ -35,7 +31,7 @@ class MeResponse(BaseModel):
 
 @router.post("/login", response_model=TokenResponse)
 def login(body: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == body.email.lower()).first()
+    user = db.query(User).filter(User.email == body.email).first()
     if not user or not user.active or not verify_password(body.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

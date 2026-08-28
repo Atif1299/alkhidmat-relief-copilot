@@ -22,14 +22,30 @@ from app.db.seed import run_seed
 from app.db.session import init_db
 
 
+_DEFAULT_JWT = "dev-change-me-aiddesk-jwt-secret-min-32-chars"
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     if settings.auth_disabled:
         print("[startup] WARNING: AUTH_DISABLED=true — API role gates are open")
+    if (
+        not settings.auth_disabled
+        and settings.is_postgres
+        and settings.jwt_secret.strip() in ("", _DEFAULT_JWT)
+    ):
+        print(
+            "[startup] WARNING: JWT_SECRET is missing or still the default — "
+            "set a strong secret before production deploy"
+        )
     init_db()
     await init_graph()
     info = run_seed()
-    print(f"[startup] DB ready: {info}")
+    # Seed may include demo password for local/demo — never log password hashes or JWT secrets.
+    print(
+        f"[startup] DB ready: resources={info.get('resources')} "
+        f"users={info.get('users')} sop_chunks={info.get('sop_chunks')}"
+    )
     yield
     await close_graph()
 

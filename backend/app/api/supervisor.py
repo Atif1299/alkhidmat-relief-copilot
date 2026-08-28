@@ -1,5 +1,7 @@
 """Supervisor HITL queue and decide API."""
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -12,6 +14,13 @@ from app.services.audit import log_event
 from app.tools.cases import update_case_fields
 
 router = APIRouter(prefix="/api/v1/supervisor", tags=["supervisor"])
+
+
+def _parse_case_id(case_id: str) -> str:
+    try:
+        return str(UUID(case_id))
+    except ValueError as exc:
+        raise HTTPException(422, "case_id must be a valid UUID") from exc
 
 
 @router.get("/queue")
@@ -46,6 +55,7 @@ async def decide(
     db: Session = Depends(get_db),
     _user: RequireSupervisor = ...,
 ):
+    case_id = _parse_case_id(case_id)
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(404, "Case not found")
