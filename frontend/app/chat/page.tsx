@@ -98,10 +98,6 @@ export default function ChatPage() {
                 {result.status}
               </span>{" "}
               {result.ticket_id && <strong>{result.ticket_id}</strong>}
-              <p className="muted">
-                {result.category} · {result.priority} · {result.language}
-                {result.integrity?.duplicate_flag ? " · duplicate flagged" : ""}
-              </p>
               {result.notification && <p>{result.notification}</p>}
               {result.case_id && (
                 <p>

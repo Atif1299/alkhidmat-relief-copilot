@@ -41,10 +41,32 @@ def _parse_front_meta(text_body: str) -> tuple[str, str, str]:
     return title, category, keywords
 
 
+def _strip_markdown_inline(text: str) -> str:
+    text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
+    text = re.sub(r"\*([^*]+)\*", r"\1", text)
+    return text.strip()
+
+
+def _build_excerpt(body: str) -> str:
+    """Plain-text excerpt: skip title/meta lines and markdown formatting."""
+    parts: list[str] = []
+    for line in body.replace("\r\n", "\n").split("\n"):
+        s = line.strip()
+        if not s:
+            continue
+        if s.startswith("# "):
+            continue
+        if "**Category:**" in s or "**Keywords:**" in s:
+            continue
+        if s.startswith("## "):
+            continue
+        parts.append(_strip_markdown_inline(s))
+    text = re.sub(r"\s+", " ", " ".join(parts)).strip()
+    return text[:280]
+
+
 def _chunk_to_hit(chunk: SopChunk, score: float, mode: str) -> dict[str, Any]:
-    excerpt = chunk.body.strip().replace("\r\n", "\n")
-    lines = [ln.strip() for ln in excerpt.split("\n") if ln.strip()]
-    excerpt_text = " ".join(lines[1:6])[:280]
+    excerpt_text = _build_excerpt(chunk.body)
     return {
         "id": chunk.id,
         "title": chunk.title,

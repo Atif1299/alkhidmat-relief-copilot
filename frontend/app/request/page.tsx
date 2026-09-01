@@ -145,10 +145,6 @@ export default function RequestPage() {
               >
                 {result.status}
               </span>
-              <p className="muted">
-                {result.category} · {result.priority} · {result.language}
-                {result.integrity?.duplicate_flag ? " · duplicate flagged" : ""}
-              </p>
               {result.notification && <p>{result.notification}</p>}
               <h3 style={{ marginTop: "1rem" }}>SOP citations</h3>
               <SopCitations hits={result.sop_hits} />
