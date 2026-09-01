@@ -51,6 +51,13 @@
 
 ## Quick start
 
+Start Postgres first if you want the product DB (port 5432 must be free):
+
+```bash
+docker compose up -d db
+copy .env.example .env
+```
+
 ### Backend
 
 ```bash
@@ -62,6 +69,14 @@ pip install -r requirements.txt
 copy ..\.env.example .env
 set LLM_MODE=mock
 uvicorn app.main:app --reload --port 8000
+```
+
+No Docker / 5432 busy: in `backend/.env` set `DATABASE_URL=sqlite:///./data/relief.db`. Tests do not need Docker:
+
+```bash
+cd backend
+set LLM_MODE=mock
+pytest -q
 ```
 
 ### Frontend
