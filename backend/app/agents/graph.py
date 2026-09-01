@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 
@@ -139,8 +140,55 @@ async def run_pipeline(message: str, case_id: str | None = None) -> dict[str, An
     # Paused before hitl_gate — upstream ran but gate node did not
     if snapshot.next and "hitl_gate" in snapshot.next:
         pause = await nodes.finalize_hitl_pause(values)
-        values = {**values, **pause}
+        from app.agents.state import dedupe_trace
+
+        values = {
+            **values,
+            **pause,
+            "agent_trace": dedupe_trace(
+                (values.get("agent_trace") or []) + (pause.get("agent_trace") or [])
+            ),
+        }
     return values
+
+
+async def stream_pipeline(
+    message: str, case_id: str | None = None
+) -> AsyncIterator[tuple[str, Any]]:
+    """Yield agent_step events as each graph node finishes, then a final state dict."""
+    graph = get_graph()
+    cid = case_id or str(uuid.uuid4())
+    config = {"configurable": {"thread_id": cid}}
+    initial: CaseState = {
+        "case_id": cid,
+        "raw_message": message,
+        "agent_trace": [],
+        "started_at_ms": int(time.time() * 1000),
+    }
+    async for update in graph.astream(initial, config=config, stream_mode="updates"):
+        if not isinstance(update, dict):
+            continue
+        for payload in update.values():
+            if not isinstance(payload, dict):
+                continue
+            for step in payload.get("agent_trace") or []:
+                yield ("agent_step", step)
+    snapshot = await graph.aget_state(config)
+    values = dict(snapshot.values or {})
+    if snapshot.next and "hitl_gate" in snapshot.next:
+        pause = await nodes.finalize_hitl_pause(values)
+        from app.agents.state import dedupe_trace
+
+        for step in pause.get("agent_trace") or []:
+            yield ("agent_step", step)
+        values = {
+            **values,
+            **pause,
+            "agent_trace": dedupe_trace(
+                (values.get("agent_trace") or []) + (pause.get("agent_trace") or [])
+            ),
+        }
+    yield ("final", values)
 
 
 async def resume_after_hitl(

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import uuid
 
 from fastapi import APIRouter
 from sse_starlette.sse import EventSourceResponse
 
-from app.agents.graph import run_pipeline
+from app.agents.graph import run_pipeline, stream_pipeline
 from app.deps.auth import OptionalChatUser
 from app.schemas import ChatRequest
 
@@ -20,9 +21,13 @@ async def chat(body: ChatRequest, _user: OptionalChatUser):
     case_id = body.case_id or str(uuid.uuid4())
 
     async def event_gen():
-        result = await run_pipeline(body.message, case_id=case_id)
-        for step in result.get("agent_trace") or []:
-            yield {"event": "agent_step", "data": json.dumps(step, ensure_ascii=False)}
+        result: dict = {}
+        async for kind, payload in stream_pipeline(body.message, case_id=case_id):
+            if kind == "agent_step":
+                yield {"event": "agent_step", "data": json.dumps(payload, ensure_ascii=False)}
+                await asyncio.sleep(0.45)
+            elif kind == "final":
+                result = payload
         if result.get("status") == "pending_hitl":
             yield {
                 "event": "hitl_required",
