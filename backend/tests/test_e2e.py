@@ -148,6 +148,12 @@ def test_critical_hitl_then_approve(client, auth_headers):
     body = decided.json()
     assert body["status"] == "dispatched"
     assert body["ticket_id"]
+    detail = client.get(f"/api/v1/cases/{case_id}", headers=auth_headers)
+    agents = [s["agent"] for s in detail.json().get("agent_trace") or []]
+    assert agents.count("Intake") == 1
+    assert agents.count("Triage") == 1
+    assert "Matcher" in agents
+    assert "Dispatch" in agents
 
 
 def test_metrics(client, desk_headers):

@@ -5,8 +5,27 @@ from __future__ import annotations
 from typing import Annotated, Any, Optional, TypedDict
 
 
+def dedupe_trace(steps: list) -> list:
+    """Drop repeated agent steps (e.g. after HITL resume re-ran upstream nodes)."""
+    seen: set[tuple[str, str, str]] = set()
+    out: list = []
+    for step in steps or []:
+        if not isinstance(step, dict):
+            continue
+        key = (
+            str(step.get("agent", "")),
+            str(step.get("action", "")),
+            str(step.get("detail", "")),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(step)
+    return out
+
+
 def merge_trace(left: list, right: list) -> list:
-    return (left or []) + (right or [])
+    return dedupe_trace((left or []) + (right or []))
 
 
 class CaseState(TypedDict, total=False):

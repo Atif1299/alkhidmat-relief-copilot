@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Literal
 
-from app.agents.state import CaseState
+from app.agents.state import CaseState, dedupe_trace
 from app.db.session import SessionLocal
 from app.services import llm as llm_service
 from app.services.audit import log_event
@@ -182,6 +182,46 @@ def route_after_integrity(state: CaseState) -> Literal["hitl_gate", "matcher"]:
     return "matcher"
 
 
+async def finalize_hitl_pause(state: CaseState) -> dict[str, Any]:
+    """Persist pending_hitl case when graph interrupts before hitl_gate."""
+    extracted = state.get("extracted") or {}
+    awaiting = _step("Supervisor", "awaiting", "Paused for human approval")
+    full_trace = dedupe_trace((state.get("agent_trace") or []) + [awaiting])
+    payload = {
+        "language": state.get("language") or "en",
+        "category": state.get("category") or "Other",
+        "priority": state.get("priority") or "medium",
+        "status": "pending_hitl",
+        "requester_name": extracted.get("requester_name"),
+        "requester_phone": extracted.get("requester_phone"),
+        "location": extracted.get("location"),
+        "need_summary": extracted.get("need_summary"),
+        "risk_score": (state.get("integrity") or {}).get("risk_score", 0),
+        "duplicate_flag": (state.get("integrity") or {}).get("duplicate_flag", False),
+        "requires_hitl": True,
+        "agent_trace": full_trace,
+        "sop_hits": state.get("sop_hits") or [],
+    }
+    db = SessionLocal()
+    try:
+        existing = case_tools.update_case_fields(db, state["case_id"])
+        if existing is None:
+            case_tools.create_case(
+                db,
+                case_id=state["case_id"],
+                raw_message=state["raw_message"],
+                **payload,
+            )
+        else:
+            case_tools.update_case_fields(db, state["case_id"], **payload)
+    finally:
+        db.close()
+    return {
+        "status": "pending_hitl",
+        "agent_trace": [awaiting],
+    }
+
+
 async def hitl_gate_node(state: CaseState) -> dict[str, Any]:
     decision = state.get("hitl_decision")
     if decision == "approve":
@@ -201,7 +241,7 @@ async def hitl_gate_node(state: CaseState) -> dict[str, Any]:
                 status="rejected",
                 hitl_decision="reject",
                 hitl_note=state.get("hitl_note"),
-                agent_trace=(state.get("agent_trace") or []) + [step],
+                agent_trace=dedupe_trace((state.get("agent_trace") or []) + [step]),
             )
             log_event(
                 db,
@@ -214,40 +254,7 @@ async def hitl_gate_node(state: CaseState) -> dict[str, Any]:
             db.close()
         return {"status": "rejected", "agent_trace": [step]}
 
-    extracted = state.get("extracted") or {}
-    payload = {
-        "language": state.get("language") or "en",
-        "category": state.get("category") or "Other",
-        "priority": state.get("priority") or "medium",
-        "status": "pending_hitl",
-        "requester_name": extracted.get("requester_name"),
-        "requester_phone": extracted.get("requester_phone"),
-        "location": extracted.get("location"),
-        "need_summary": extracted.get("need_summary"),
-        "risk_score": (state.get("integrity") or {}).get("risk_score", 0),
-        "duplicate_flag": (state.get("integrity") or {}).get("duplicate_flag", False),
-        "requires_hitl": True,
-        "agent_trace": state.get("agent_trace") or [],
-        "sop_hits": state.get("sop_hits") or [],
-    }
-    db = SessionLocal()
-    try:
-        existing = case_tools.update_case_fields(db, state["case_id"])
-        if existing is None:
-            case_tools.create_case(
-                db,
-                case_id=state["case_id"],
-                raw_message=state["raw_message"],
-                **payload,
-            )
-        else:
-            case_tools.update_case_fields(db, state["case_id"], **payload)
-    finally:
-        db.close()
-    return {
-        "status": "pending_hitl",
-        "agent_trace": [_step("Supervisor", "awaiting", "Paused for human approval")],
-    }
+    return await finalize_hitl_pause(state)
 
 
 def route_after_hitl(state: CaseState) -> Literal["matcher", "__end__"]:
@@ -364,10 +371,11 @@ async def dispatch_node(state: CaseState) -> dict[str, Any]:
             text=msg,
         )
         step = _step("Dispatch", "ticket_created", msg, ticket_id=ticket_id, status=status)
+        final_trace = dedupe_trace((state.get("agent_trace") or []) + [step])
         case_tools.update_case_fields(
             db,
             state["case_id"],
-            agent_trace=(state.get("agent_trace") or []) + [step],
+            agent_trace=final_trace,
             status=status,
             ticket_id=ticket_id,
         )

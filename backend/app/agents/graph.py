@@ -114,7 +114,7 @@ def build_graph():
     )
     graph.add_edge("matcher", "dispatch")
     graph.add_edge("dispatch", END)
-    return graph.compile(checkpointer=_checkpointer)
+    return graph.compile(checkpointer=_checkpointer, interrupt_before=["hitl_gate"])
 
 
 def get_graph():
@@ -133,8 +133,14 @@ async def run_pipeline(message: str, case_id: str | None = None) -> dict[str, An
         "agent_trace": [],
         "started_at_ms": int(time.time() * 1000),
     }
-    result = await graph.ainvoke(initial, config=config)
-    return dict(result)
+    await graph.ainvoke(initial, config=config)
+    snapshot = await graph.aget_state(config)
+    values = dict(snapshot.values or {})
+    # Paused before hitl_gate — upstream ran but gate node did not
+    if snapshot.next and "hitl_gate" in snapshot.next:
+        pause = await nodes.finalize_hitl_pause(values)
+        values = {**values, **pause}
+    return values
 
 
 async def resume_after_hitl(
@@ -144,8 +150,9 @@ async def resume_after_hitl(
 ) -> dict[str, Any]:
     graph = get_graph()
     config = {"configurable": {"thread_id": case_id}}
-    result = await graph.ainvoke(
+    await graph.ainvoke(
         {"hitl_decision": decision, "hitl_note": note or ""},
         config=config,
     )
-    return dict(result)
+    snapshot = await graph.aget_state(config)
+    return dict(snapshot.values or {})
