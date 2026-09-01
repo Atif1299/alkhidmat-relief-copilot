@@ -44,34 +44,81 @@ def _parse_front_meta(text_body: str) -> tuple[str, str, str]:
 def _strip_markdown_inline(text: str) -> str:
     text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
     text = re.sub(r"\*([^*]+)\*", r"\1", text)
+    text = re.sub(r"`([^`]+)`", r"\1", text)
     return text.strip()
 
 
-def _build_excerpt(body: str) -> str:
-    """Plain-text excerpt: skip title/meta lines and markdown formatting."""
-    parts: list[str] = []
-    for line in body.replace("\r\n", "\n").split("\n"):
-        s = line.strip()
-        if not s:
+def _is_table_sep(line: str) -> bool:
+    s = line.replace("|", "").replace("-", "").replace(":", "").replace(" ", "")
+    return line.startswith("|") and not s
+
+
+def _parse_table_row(line: str) -> list[str]:
+    cells = [c.strip() for c in line.strip().strip("|").split("|")]
+    return [_strip_markdown_inline(c) for c in cells if c]
+
+
+def _citation_from_body(body: str) -> tuple[str, list[str]]:
+    """Readable SOP card: purpose sentence + complete rules/phrases (no raw markdown)."""
+    purpose = ""
+    points: list[str] = []
+    section = ""
+    table_header: list[str] = []
+    for raw in body.replace("\r\n", "\n").split("\n"):
+        line = raw.strip()
+        if not line or line.startswith("# "):
             continue
-        if s.startswith("# "):
+        if "**Category:**" in line or "**Keywords:**" in line:
             continue
-        if "**Category:**" in s or "**Keywords:**" in s:
+        if line.startswith("## "):
+            section = line[3:].strip().lower()
+            table_header = []
             continue
-        if s.startswith("## "):
+        if line.startswith("|"):
+            if _is_table_sep(line):
+                continue
+            cells = _parse_table_row(line)
+            if not cells:
+                continue
+            if not table_header:
+                table_header = [c.lower() for c in cells]
+                continue
+            phrase = cells[0]
+            meaning = cells[1] if len(cells) > 1 else ""
+            category = cells[2] if len(cells) > 2 else ""
+            if meaning and category:
+                points.append(f"{phrase} — {meaning} ({category})")
+            elif meaning:
+                points.append(f"{phrase} — {meaning}")
+            else:
+                points.append(phrase)
             continue
-        parts.append(_strip_markdown_inline(s))
-    text = re.sub(r"\s+", " ", " ".join(parts)).strip()
-    return text[:280]
+        numbered = re.match(r"^(\d+)\.\s+(.*)$", line)
+        if numbered:
+            points.append(_strip_markdown_inline(numbered.group(2)))
+            continue
+        text = _strip_markdown_inline(line)
+        if not text:
+            continue
+        if section == "purpose" and not purpose:
+            purpose = text
+        elif not purpose and section in ("", "purpose"):
+            purpose = text
+    points = [p for p in points if p][:6]
+    if not purpose and points:
+        purpose = points[0]
+        points = points[1:]
+    return purpose, points
 
 
 def _chunk_to_hit(chunk: SopChunk, score: float, mode: str) -> dict[str, Any]:
-    excerpt_text = _build_excerpt(chunk.body)
+    purpose, points = _citation_from_body(chunk.body)
     return {
         "id": chunk.id,
         "title": chunk.title,
         "category": chunk.category,
-        "excerpt": excerpt_text,
+        "excerpt": purpose,
+        "points": points,
         "score": round(float(score), 4),
         "source_file": chunk.source_file,
         "retrieval_mode": mode,
