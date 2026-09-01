@@ -11,7 +11,8 @@ function normalizeAgent(name: string): string {
   if (n.includes("knowledge") || n.includes("rag")) return "Knowledge";
   if (n.includes("integrity")) return "Integrity";
   if (n.includes("match")) return "Matcher";
-  if (n.includes("dispatch") || n.includes("hitl") || n.includes("supervisor")) return "Dispatch";
+  if (n.includes("dispatch")) return "Dispatch";
+  if (n.includes("hitl") || n.includes("supervisor")) return "Integrity";
   return name;
 }
 
@@ -25,30 +26,30 @@ export function PipelineStrip({
   status?: string | null;
 }) {
   const done = new Set(steps.map((s) => normalizeAgent(s.agent)));
-  let activeIndex = -1;
+  let lastDone = -1;
   for (let i = 0; i < STAGES.length; i++) {
-    if (done.has(STAGES[i])) activeIndex = i;
+    if (done.has(STAGES[i])) lastDone = i;
   }
-  if (busy && activeIndex < STAGES.length - 1) {
-    activeIndex = Math.min(activeIndex + 1, STAGES.length - 1);
-  }
-  if (status === "pending_hitl") {
-    activeIndex = STAGES.indexOf("Integrity");
-  }
-  if (status === "dispatched") {
-    activeIndex = STAGES.length - 1;
+
+  const hitlWait = status === "pending_hitl";
+  const dispatched = status === "dispatched";
+  const integrityIdx = STAGES.indexOf("Integrity");
+
+  let runningIndex = -1;
+  if (busy && !hitlWait && !dispatched) {
+    runningIndex = lastDone < 0 ? 0 : Math.min(lastDone + 1, STAGES.length - 1);
   }
 
   return (
     <ol className="pipeline-strip" aria-label="Agent pipeline">
       {STAGES.map((stage, i) => {
         let state = "pending";
-        if (done.has(stage) || (status === "dispatched" && i <= STAGES.length - 1 && i <= activeIndex)) {
+        if (dispatched || i < lastDone || (i === lastDone && !hitlWait)) {
           state = "done";
         }
-        if (busy && i === activeIndex) state = "active";
-        if (!busy && status === "pending_hitl" && stage === "Integrity") state = "active";
-        if (!busy && done.has(stage)) state = "done";
+        if (hitlWait && i < integrityIdx) state = "done";
+        if (hitlWait && i === integrityIdx) state = "paused";
+        if (runningIndex === i) state = "active";
         return (
           <li key={stage} className={`pipeline-step ${state}`}>
             <span className="pipeline-dot" aria-hidden />

@@ -399,7 +399,7 @@ input {
   gap: 0.65rem;
 }
 
-.citations li {
+.citations > li {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.65rem 0.75rem;
@@ -410,6 +410,20 @@ input {
   margin: 0.35rem 0 0;
   font-size: 0.88rem;
   color: var(--muted);
+}
+
+.citation-points {
+  margin: 0.45rem 0 0;
+  padding-left: 1.15rem;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+.citation-points li {
+  border: none;
+  background: transparent;
+  padding: 0.12rem 0;
+  border-radius: 0;
 }
 
 .timeline {
@@ -550,7 +564,7 @@ a.chip {
 .pipeline-strip {
   list-style: none;
   margin: 0;
-  padding: 0.25rem 0;
+  padding: 0.55rem 0 0.25rem;
   display: flex;
   gap: 0;
   min-width: 520px;
@@ -599,13 +613,36 @@ a.chip {
 }
 
 .pipeline-step.active .pipeline-dot {
+  background: var(--ok);
+  box-shadow: 0 0 0 1px var(--ok);
+  position: relative;
+}
+
+.pipeline-step.active .pipeline-dot::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--ok);
+  animation: pipeline-spin 0.85s linear infinite;
+}
+
+.pipeline-step.paused .pipeline-dot {
   background: var(--accent-2);
   box-shadow: 0 0 0 3px rgba(196, 92, 38, 0.25);
 }
 
 .pipeline-step.done,
-.pipeline-step.active {
+.pipeline-step.active,
+.pipeline-step.paused {
   color: var(--ink);
+}
+
+@keyframes pipeline-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .outcome-banner {
@@ -664,6 +701,10 @@ a.chip {
   .trace li,
   .landing-hero,
   .outcome-banner {
+    animation: none;
+  }
+
+  .pipeline-step.active .pipeline-dot::after {
     animation: none;
   }
 

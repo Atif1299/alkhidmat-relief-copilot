@@ -4,19 +4,11 @@ export type SopHit = {
   title?: string;
   category?: string;
   excerpt?: string;
+  points?: string[];
   score?: number;
   source_file?: string;
   retrieval_mode?: string;
 };
-
-function stripMarkdown(text: string): string {
-  return text
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/\*([^*]+)\*/g, "$1")
-    .replace(/^#+\s*/gm, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 export function SopCitations({ hits }: { hits?: SopHit[] | null }) {
   if (!hits?.length) {
@@ -27,7 +19,15 @@ export function SopCitations({ hits }: { hits?: SopHit[] | null }) {
       {hits.map((hit, i) => (
         <li key={`${hit.title}-${i}`}>
           <strong>{hit.title}</strong>
-          {hit.excerpt && <p>{stripMarkdown(hit.excerpt)}</p>}
+          {hit.category ? <span className="muted"> · {hit.category}</span> : null}
+          {hit.excerpt ? <p>{hit.excerpt}</p> : null}
+          {hit.points && hit.points.length > 0 ? (
+            <ol className="citation-points">
+              {hit.points.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ol>
+          ) : null}
         </li>
       ))}
     </ul>

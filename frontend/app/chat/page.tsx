@@ -40,6 +40,13 @@ export default function ChatPage() {
         if (event === "agent_step") {
           setSteps((prev) => [...prev, data as AgentStep]);
         }
+        if (event === "hitl_required") {
+          setResult((prev) => ({
+            ...(prev || {}),
+            ...(data as ChatResult),
+            status: "pending_hitl",
+          }));
+        }
         if (event === "done") {
           setResult(data as ChatResult);
           if ((data as ChatResult).agent_trace?.length) {
@@ -87,13 +94,12 @@ export default function ChatPage() {
           {result && (
             <div style={{ marginTop: "1rem" }}>
               <span
-                className={`badge ${
-                  result.status === "dispatched"
+                className={`badge ${result.status === "dispatched"
                     ? "ok"
                     : result.status === "pending_hitl"
                       ? "warn"
                       : "neutral"
-                }`}
+                  }`}
               >
                 {result.status}
               </span>{" "}
