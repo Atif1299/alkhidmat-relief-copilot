@@ -132,6 +132,12 @@
 
 **Status:** accepted
 
+### 2026-09-01 — Polished HITL interrupt + live pipeline + SOP cards
+
+**Context:** Teammate branch `polished` (HITL duplicate Intake/Triage after approve). Local Docker Postgres failed when port 5432 belonged to another project or Docker was missing — not a product bug.  
+**Decision:** Merge `polished` into `main`. Keep LangGraph `interrupt_before=["hitl_gate"]` and trace dedupe. Stream SSE `agent_step` per node so the public pipeline is live. SOP citations = purpose + complete points (no markdown tables). pytest/SQLite remains the no-Docker gate. Live GCP stays Postgres.  
+**Status:** accepted
+
 ### 2026-08-27 — Tier 3 Production Hardening (1D)
 
 **Context:** User chose local-first auth + Docker Postgres, then vector RAG; WhatsApp deferred.  

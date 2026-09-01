@@ -48,17 +48,19 @@ Staff default home after login: **`/tickets`**.
 ```
 START → Intake → Triage → Knowledge → Integrity
                                           ├─ (normal) → Matcher → Dispatch → END
-                                          └─ (HITL) → hitl_gate → END (pause)
+                                          └─ (HITL) interrupt_before hitl_gate → pending_hitl
                                                      resume(approve) → Matcher → Dispatch → END
 ```
 
-**Non-negotiable:** Integrity is never skipped on create. HITL when critical priority or high integrity risk.
+**Non-negotiable:** Integrity is never skipped on create. HITL when critical priority, duplicate, or high integrity risk.
+
+Compile uses LangGraph `interrupt_before=["hitl_gate"]` so approve does **not** re-run Intake/Triage. Guest `POST /api/v1/chat` **streams each node** as SSE `agent_step` (live pipeline); `POST /chat/sync` still returns the full result (tests).
 
 ## Architecture story (judges / onboarding)
 
 1. Citizen describes need in Urdu or English on **Request aid** (no signup).
-2. Agents classify, retrieve Alkhidmat SOPs, check duplicates/fraud heuristics.
-3. High-risk cases pause for **Supervisor** approve/reject; otherwise Matcher + Dispatch open a ticket.
+2. The **live desk pipeline** lights each agent as it runs (green ring = in process). High-risk cases **hold on Integrity** until Supervisor approve/reject.
+3. SOP citations are purpose + complete rules/phrases (not raw markdown tables).
 4. Desk operators see tickets, timeline, agent trace, and PDF export.
 
 ## Tier 3 modules
@@ -89,6 +91,8 @@ START → Intake → Triage → Knowledge → Integrity
 
 ## Run locally (Tier 3)
 
+Product DB is Postgres. If Docker is available and port **5432 is free**:
+
 ```bash
 docker compose up -d db
 # backend/.env → DATABASE_URL=postgresql+psycopg://aiddesk:aiddesk@localhost:5432/aiddesk
@@ -96,5 +100,7 @@ cd backend && .venv\Scripts\activate && pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 cd frontend && npm run dev
 ```
+
+If `5432` is already another Postgres (wrong password for `aiddesk`), either stop that container or set `DATABASE_URL=sqlite:///./data/relief.db` for a local UI preview. **pytest always uses SQLite** (`backend/tests/conftest.py`) — no Docker required.
 
 Open http://localhost:3000 — landing. Citizens: **Request aid**. Staff: **Staff sign in**.
