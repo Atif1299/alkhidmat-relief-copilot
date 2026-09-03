@@ -38,9 +38,14 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1>Ops dashboard</h1>
-      <p className="muted">Cases, speed, and escalations — so the desk knows what needs attention.</p>
-      <div className="actions" style={{ margin: "0.75rem 0" }}>
+      <header className="page-head">
+        <p className="eyebrow">Sitrep</p>
+        <h1>Ops dashboard</h1>
+        <p className="muted" style={{ margin: 0 }}>
+          Cases, speed, and escalations — so the desk knows what needs attention.
+        </p>
+      </header>
+      <div className="actions" style={{ margin: "0 0 0.85rem" }}>
         <button className="btn secondary" type="button" onClick={load}>
           Refresh
         </button>
@@ -73,7 +78,7 @@ export default function DashboardPage() {
               <span className="muted">Escalation %</span>
               <strong>{m.escalation_pct}%</strong>
             </div>
-            <div className="metric">
+            <div className={`metric ${m.pending_hitl > 0 ? "metric-hitl" : ""}`}>
               <span className="muted">Pending HITL</span>
               <strong>{m.pending_hitl}</strong>
             </div>
@@ -81,20 +86,22 @@ export default function DashboardPage() {
           <div className="grid-2" style={{ marginTop: "1rem" }}>
             <section className="panel">
               <h2>By status</h2>
-              <ul>
+              <ul className="stat-list">
                 {Object.entries(m.by_status).map(([k, v]) => (
                   <li key={k}>
-                    {k}: <strong>{v}</strong>
+                    <span>{k}</span>
+                    <strong>{v}</strong>
                   </li>
                 ))}
               </ul>
             </section>
             <section className="panel">
               <h2>By category</h2>
-              <ul>
+              <ul className="stat-list">
                 {Object.entries(m.by_category).map(([k, v]) => (
                   <li key={k}>
-                    {k}: <strong>{v}</strong>
+                    <span>{k}</span>
+                    <strong>{v}</strong>
                   </li>
                 ))}
               </ul>

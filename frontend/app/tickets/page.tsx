@@ -45,9 +45,14 @@ export default function TicketsPage() {
 
   return (
     <div>
-      <h1>Ops tickets</h1>
-      <p className="muted">All relief cases routed by the multi-agent desk.</p>
-      <div className="actions" style={{ margin: "0.75rem 0" }}>
+      <header className="page-head">
+        <p className="eyebrow">Ops desk</p>
+        <h1>Tickets</h1>
+        <p className="muted" style={{ margin: 0 }}>
+          Relief cases routed by the multi-agent desk.
+        </p>
+      </header>
+      <div className="actions" style={{ margin: "0 0 0.85rem" }}>
         <button className="btn secondary" type="button" onClick={load}>
           Refresh
         </button>
@@ -79,9 +84,11 @@ export default function TicketsPage() {
                   <tr>
                     <td>
                       <Link href={`/cases/${c.id}`}>
-                        <strong>{c.ticket_id || "—"}</strong>
+                        <code className="ticket-stamp" style={{ fontSize: "0.82rem" }}>
+                          {c.ticket_id || "—"}
+                        </code>
                       </Link>
-                      <div className="muted" style={{ maxWidth: 220 }}>
+                      <div className="muted" style={{ maxWidth: 240, marginTop: 6 }}>
                         {c.raw_message.slice(0, 80)}
                       </div>
                     </td>

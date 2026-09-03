@@ -64,11 +64,13 @@ export default function ChatPage() {
 
   return (
     <div>
-      <h1>Test intake</h1>
-      <p className="muted">
-        Staff sandbox for the same pipeline citizens use on{" "}
-        <Link href="/request">Request aid</Link>.
-      </p>
+      <header className="page-head">
+        <p className="eyebrow">Staff sandbox</p>
+        <h1>Test intake</h1>
+        <p className="muted" style={{ margin: 0 }}>
+          Same pipeline citizens use on <Link href="/request">Request aid</Link>.
+        </p>
+      </header>
 
       <div className="pipeline-wrap panel" style={{ marginTop: "1rem" }}>
         <PipelineStrip steps={steps} busy={busy} status={result?.status} />

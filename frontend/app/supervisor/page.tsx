@@ -52,10 +52,13 @@ export default function SupervisorPage() {
 
   return (
     <div>
-      <h1>Supervisor HITL</h1>
-      <p className="muted">
-        Critical and high-risk cases pause here until a human approves or rejects.
-      </p>
+      <header className="page-head">
+        <p className="eyebrow">Human in the loop</p>
+        <h1>Supervisor queue</h1>
+        <p className="muted" style={{ margin: 0 }}>
+          Critical and high-risk cases pause here until a human approves or rejects.
+        </p>
+      </header>
       <div className="panel" style={{ marginTop: "1rem", marginBottom: "1rem" }}>
         <label htmlFor="decision-note" className="muted">
           Decision note
@@ -83,7 +86,7 @@ export default function SupervisorPage() {
       )}
       <div style={{ display: "grid", gap: "0.85rem" }}>
         {queue.map((item) => (
-          <article key={item.id} className="panel">
+          <article key={item.id} className="panel hitl-case">
             <div className="actions" style={{ justifyContent: "space-between" }}>
               <div>
                 <span className={`badge ${item.priority === "critical" ? "danger" : "warn"}`}>

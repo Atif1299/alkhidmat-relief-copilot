@@ -66,11 +66,14 @@ export default function CaseDetailPage() {
       <p className="muted">
         <Link href="/tickets">← Tickets</Link>
       </p>
-      <h1>{data.ticket_id || data.id}</h1>
-      <p className="muted">
-        {data.category} · {data.priority} · risk {data.risk_score ?? "—"}
-        {data.duplicate_flag ? " · duplicate" : ""}
-      </p>
+      <header className="page-head">
+        <p className="eyebrow">Case file</p>
+        <h1 className="case-kicker">{data.ticket_id || data.id}</h1>
+        <p className="muted" style={{ margin: 0 }}>
+          {data.category} · {data.priority} · risk {data.risk_score ?? "—"}
+          {data.duplicate_flag ? " · duplicate" : ""}
+        </p>
+      </header>
       <div className="actions" style={{ margin: "0.75rem 0" }}>
         <button
           className="btn"
