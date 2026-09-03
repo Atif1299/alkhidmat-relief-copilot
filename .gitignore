@@ -40,3 +40,6 @@ Thumbs.db
 backend/data/
 
 .qoder/
+
+# Next
+frontend/tsconfig.tsbuildinfo

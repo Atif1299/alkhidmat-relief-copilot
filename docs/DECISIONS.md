@@ -138,6 +138,12 @@
 **Decision:** Merge `polished` into `main`. Keep LangGraph `interrupt_before=["hitl_gate"]` and trace dedupe. Stream SSE `agent_step` per node so the public pipeline is live. SOP citations = purpose + complete points (no markdown tables). pytest/SQLite remains the no-Docker gate. Live GCP stays Postgres.  
 **Status:** accepted
 
+### 2026-09-03 — Sitrep visual system (landing + whole product)
+
+**Context:** Landing read as a generic light-green NGO page (Segoe, cream). Regional demo needs a first-screen that looks like an Alkhidmat ops desk.  
+**Decision:** Field **sitrep** identity — cool paper, forest/canopy, brass rules, saffron **only** for HITL. IBM Plex + Noto Nastaliq. Landing hero is a **choreographed** pipeline replay (no API on load). Public `/request` stays guest (`anonymous` chat). Staff screens share the same tokens. No Tailwind/GSAP/new agents.  
+**Status:** accepted
+
 ### 2026-08-27 — Tier 3 Production Hardening (1D)
 
 **Context:** User chose local-first auth + Docker Postgres, then vector RAG; WhatsApp deferred.  

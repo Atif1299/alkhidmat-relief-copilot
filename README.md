@@ -40,13 +40,13 @@
 
 ## Capabilities
 
-- **Public request path** — `/` landing → `/request` guest intake (no citizen account)
+- **Public request path** — `/` sitrep landing → `/request` guest intake (no citizen account)
 - **Staff ops** — JWT roles (desk / supervisor); home `/tickets`
-- **Agent trace** — every step visible in the UI
+- **Agent trace** — live pipeline + sitrep replay on the landing (replay is local, not an LLM call)
 - **Integrity** — duplicate / risk checks; never skipped on create
 - **HITL** — approve / reject critical or high-risk cases
 - **Light RAG** — SOP retrieval (keyword + pgvector when available)
-- **Urdu + English** — live intake and notifications
+- **Urdu + English** — Nastaliq lockup + live intake
 - **Metrics + PDF** — desk dashboard and case export
 
 ## Quick start

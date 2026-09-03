@@ -156,11 +156,12 @@ curl -s https://relief-api-4idrhaffca-el.a.run.app/health
 
 Browser on **https://relief-web-4idrhaffca-el.a.run.app**:
 
-1. `/login` as `supervisor@aiddesk.example` / `AidDesk!2026`
-2. `/chat` — Urdu food → Knowledge citations + ticket  
-3. Duplicate `03001234567` / critical medical → Supervisor → Approve  
-4. Case detail → timeline + Export PDF  
-5. Logout → login as `citizen@aiddesk.example` — chat-only nav  
+1. `/` — sitrep board replays and stamps a demo ticket (no login, no API)
+2. `/request` as a **guest** (no JWT) — Urdu food → ticket. A leftover staff token must not 401.
+3. `/login` as `supervisor@aiddesk.example` / `AidDesk!2026`
+4. Duplicate `03001234567` / critical medical → Supervisor → Approve
+5. Case detail → timeline + Export PDF
+6. Logout → landing still public (Request aid, no staff nav)  
 
 **Reindex SOPs on Cloud SQL (optional one-off):**
 

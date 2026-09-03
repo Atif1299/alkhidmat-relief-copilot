@@ -23,9 +23,14 @@ Aid requests hit NGOs as messy Urdu/English messages — wrong routing, duplicat
 
 ### 2. Landing + citizen path (70s)
 
-Open **/**. Point to dual CTAs: **Request aid** vs **Staff sign in**.
+Open **/**. The **Lahore desk sitrep** board replays Intake → Dispatch and stamps `AKD-SITREP-7AB355` (~8s). This is a local choreography — **not** a live API call. Point to:
 
-Click **Request aid**. Show live **pipeline strip** — each agent lights as it runs. Click chip **Urdu · Food** (or paste):
+- Dual CTAs: **Request aid** vs **Staff sign in**
+- Urdu lockup `امداد ڈیسک` in the header
+- Footer strip: Qwen · DashScope · LangGraph · FastAPI · Cloud Run
+- HITL callout (saffron) — “human when it matters”
+
+Click **Request aid**. Guest submit — no login, even if a leftover staff token is in the browser. Show live **pipeline strip** — each agent lights as it runs. Click chip **Urdu · Food** (or paste):
 
 > Flood ke baad khane ki zaroorat hai, Township Lahore, family of 5. Phone 03017654321
 

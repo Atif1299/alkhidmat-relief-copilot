@@ -15,7 +15,7 @@ NGO **Aid Desk SaaS**: Urdu/English request → verified ticket with HITL — JW
 | Knowledge | SOP files → embeddings (DashScope) → **pgvector / cosine** + keyword fallback |
 | Auth | JWT (HS256) + bcrypt; roles `requester` \| `desk` \| `supervisor` |
 | API | FastAPI + SSE; **guest** `POST /chat` allowed |
-| UI | Next.js 14 — public landing + `/request`, staff `/login` |
+| UI | Next.js 14 — sitrep landing + `/request` guest, staff `/login` |
 | DB | **Docker Postgres + pgvector** locally; Cloud SQL on GCP |
 | PDF | reportlab |
 | Deploy | GCP Cloud Run — [DEPLOYMENT.md](DEPLOYMENT.md) |
@@ -35,7 +35,7 @@ flowchart LR
 
 | Route | Who | Auth |
 |-------|-----|------|
-| `/` | Everyone | Public landing (Request aid + Staff sign in) |
+| `/` | Everyone | Sitrep landing (choreographed pipeline + Request aid / Staff sign in) |
 | `/request` | Citizens | **No account** — anonymous chat API |
 | `/login` | Desk / Supervisor | JWT |
 | `/tickets`, `/dashboard`, `/supervisor`, `/cases/[id]` | Staff | JWT (role-gated) |
@@ -58,10 +58,11 @@ Compile uses LangGraph `interrupt_before=["hitl_gate"]` so approve does **not** 
 
 ## Architecture story (judges / onboarding)
 
-1. Citizen describes need in Urdu or English on **Request aid** (no signup).
-2. The **live desk pipeline** lights each agent as it runs (green ring = in process). High-risk cases **hold on Integrity** until Supervisor approve/reject.
-3. SOP citations are purpose + complete rules/phrases (not raw markdown tables).
-4. Desk operators see tickets, timeline, agent trace, and PDF export.
+1. Landing `/` is a **field sitrep desk** (forest + brass, IBM Plex + Noto Nastaliq, bilingual lockup). The hero board *replays* the six agents and stamps a demo ticket — no LLM call on page load.
+2. Citizen describes need in Urdu or English on **Request aid** (no signup). Public chat is **anonymous**: a leftover staff JWT must not 401 guest intake.
+3. The **live desk pipeline** lights each agent as it runs (green ring = in process). High-risk cases **hold on Integrity** until Supervisor approve/reject.
+4. SOP citations are purpose + complete rules/phrases (not raw markdown tables).
+5. Desk operators see tickets, timeline, agent trace, and PDF export.
 
 ## Tier 3 modules
 
