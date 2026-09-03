@@ -35,31 +35,35 @@ export default function RequestPage() {
     setSteps([]);
     setResult(null);
     try {
-      const done = await chatStream(message, (event, data) => {
-        if (event === "agent_step") {
-          setSteps((prev) => [...prev, data as AgentStep]);
-        }
-        if (event === "hitl_required") {
-          setResult((prev) => ({
-            ...(prev || {}),
-            ...(data as ChatResult),
-            status: "pending_hitl",
-          }));
-        }
-        if (event === "done") {
-          setResult(data as ChatResult);
-          if ((data as ChatResult).agent_trace?.length) {
-            setSteps((data as ChatResult).agent_trace || []);
+      const done = await chatStream(
+        message,
+        (event, data) => {
+          if (event === "agent_step") {
+            setSteps((prev) => [...prev, data as AgentStep]);
           }
-        }
-      });
+          if (event === "hitl_required") {
+            setResult((prev) => ({
+              ...(prev || {}),
+              ...(data as ChatResult),
+              status: "pending_hitl",
+            }));
+          }
+          if (event === "done") {
+            setResult(data as ChatResult);
+            if ((data as ChatResult).agent_trace?.length) {
+              setSteps((data as ChatResult).agent_trace || []);
+            }
+          }
+        },
+        { anonymous: true }
+      );
       if (done) setResult(done);
     } catch (e) {
       const raw = e instanceof Error ? e.message : "Request failed";
       if (raw.includes("422")) {
         setError("Please enter a valid aid request (1–4000 characters).");
       } else if (raw.includes("401")) {
-        setError("Could not reach the aid desk (auth). Please try again in a moment.");
+        setError("The aid desk rejected the session token. Refresh and submit again as a guest.");
       } else if (raw.includes("Failed") || raw.includes("fetch")) {
         setError("Network error — check that the aid desk is online, then try again.");
       } else {
@@ -144,10 +148,10 @@ export default function RequestPage() {
             <div style={{ marginTop: "1rem" }}>
               <span
                 className={`badge ${result.status === "dispatched"
-                    ? "ok"
-                    : result.status === "pending_hitl"
-                      ? "warn"
-                      : "neutral"
+                  ? "ok"
+                  : result.status === "pending_hitl"
+                    ? "warn"
+                    : "neutral"
                   }`}
               >
                 {result.status}

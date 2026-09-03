@@ -4,7 +4,7 @@
  * - Empty string (Docker build ARG): same-origin relative paths via nginx (/api/...)
  * - Explicit URL: that host
  */
-import { authHeaders, getToken } from "./auth";
+import { authHeaders, clearAuth, getToken } from "./auth";
 
 function resolveApiUrl(): string {
   const raw = process.env.NEXT_PUBLIC_API_URL;
@@ -95,19 +95,32 @@ export async function chatSync(message: string): Promise<ChatResult> {
   return res.json();
 }
 
+const CHAT_STREAM_HEADERS = {
+  "Content-Type": "application/json",
+  Accept: "text/event-stream",
+};
+
 /** Stream SSE events from POST /api/v1/chat */
 export async function chatStream(
   message: string,
-  onEvent: (event: string, data: unknown) => void
+  onEvent: (event: string, data: unknown) => void,
+  options?: { anonymous?: boolean }
 ): Promise<ChatResult | null> {
-  const res = await fetch(`${API_URL}/api/v1/chat`, {
+  const skipAuth = options?.anonymous === true;
+  let res = await fetch(`${API_URL}/api/v1/chat`, {
     method: "POST",
-    headers: authHeaders({
-      "Content-Type": "application/json",
-      Accept: "text/event-stream",
-    }),
+    headers: skipAuth ? CHAT_STREAM_HEADERS : authHeaders(CHAT_STREAM_HEADERS),
     body: JSON.stringify({ message }),
   });
+  // Public intake allows guests. A leftover / expired staff token must not block it.
+  if (res.status === 401 && getToken()) {
+    clearAuth();
+    res = await fetch(`${API_URL}/api/v1/chat`, {
+      method: "POST",
+      headers: CHAT_STREAM_HEADERS,
+      body: JSON.stringify({ message }),
+    });
+  }
   if (!res.ok || !res.body) throw new Error(`Chat stream failed: ${res.status}`);
 
   const reader = res.body.getReader();
