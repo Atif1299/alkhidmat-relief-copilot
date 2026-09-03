@@ -9,8 +9,16 @@ import type { DeskRole } from "@/lib/roles";
 import { staffHome } from "@/lib/roles";
 
 const STAFF_ACCOUNTS = [
-  { email: "desk@aiddesk.example", role: "Desk" },
-  { email: "supervisor@aiddesk.example", role: "Supervisor" },
+  {
+    email: "desk@aiddesk.example",
+    role: "Desk",
+    hint: "Tickets, dashboard, PDF",
+  },
+  {
+    email: "supervisor@aiddesk.example",
+    role: "Supervisor",
+    hint: "HITL approve / reject",
+  },
 ];
 
 export default function LoginPage() {
@@ -43,12 +51,28 @@ export default function LoginPage() {
   return (
     <div className="login-wrap">
       <div className="panel login-card">
-        <h1 style={{ marginTop: 0 }}>Staff sign in</h1>
+        <p className="eyebrow">Staff gate</p>
+        <h1 style={{ marginTop: 0 }}>Sign in to the desk</h1>
         <p className="muted">
-          For desk operators and supervisors. Citizens should{" "}
-          <Link href="/request">request aid</Link> without an account.
+          Desk operators and supervisors only. Demo accounts fill email and password.
         </p>
-        <form onSubmit={onSubmit} className="stack">
+        <div className="role-cards">
+          {STAFF_ACCOUNTS.map((a) => (
+            <button
+              key={a.email}
+              type="button"
+              className={email === a.email ? "role-card active" : "role-card"}
+              onClick={() => {
+                setEmail(a.email);
+                setPassword("AidDesk!2026");
+              }}
+            >
+              <strong>{a.role}</strong>
+              <span>{a.hint}</span>
+            </button>
+          ))}
+        </div>
+        <form onSubmit={onSubmit} className="stack" style={{ marginTop: "1rem" }}>
           <label>
             Email
             <input
@@ -74,26 +98,14 @@ export default function LoginPage() {
             {busy ? "Signing in…" : "Sign in"}
           </button>
         </form>
-        <div className="chip-row" style={{ marginTop: "1.25rem" }}>
-          {STAFF_ACCOUNTS.map((a) => (
-            <button
-              key={a.email}
-              type="button"
-              className="chip"
-              onClick={() => {
-                setEmail(a.email);
-                setPassword("AidDesk!2026");
-              }}
-            >
-              {a.role}
-            </button>
-          ))}
-        </div>
         <p className="muted" style={{ marginTop: "1rem", fontSize: "0.8rem" }}>
-          Demo password: <code>AidDesk!2026</code>
+          Demo password: <code className="ticket-stamp" style={{ fontSize: "0.78rem" }}>AidDesk!2026</code>
         </p>
-        <p className="muted" style={{ marginTop: "0.75rem" }}>
-          <Link href="/">← Back to home</Link>
+        <p className="login-escape muted">
+          Need help?{" "}
+          <Link href="/request">Request aid — no account</Link>
+          <br />
+          <Link href="/">Back to home</Link>
         </p>
       </div>
     </div>

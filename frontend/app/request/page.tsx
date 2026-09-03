@@ -83,13 +83,18 @@ export default function RequestPage() {
 
   return (
     <div>
-      <h1>Request aid</h1>
-      <p className="muted">
-        No account needed. Describe your need in Urdu or English — include area and a phone number
-        if you can.
-      </p>
+      <header className="page-head">
+        <p className="eyebrow">Public intake · no account</p>
+        <h1>Request aid</h1>
+        <p className="urdu hero-urdu" lang="ur" style={{ fontSize: "1.05rem", margin: "0 0 0.4rem" }}>
+          ضرورت اردو یا انگریزی میں لکھیں
+        </p>
+        <p className="muted" style={{ margin: 0 }}>
+          Include area and a phone number if you can. The live pipeline shows each agent as it runs.
+        </p>
+      </header>
 
-      <div className="pipeline-wrap panel" style={{ marginTop: "1rem" }}>
+      <div className="pipeline-wrap panel">
         <p className="eyebrow" style={{ marginBottom: "0.65rem" }}>
           Live desk pipeline
         </p>
@@ -105,7 +110,7 @@ export default function RequestPage() {
             {result.status === "dispatched" ? "Ticket created" : "Waiting for supervisor"}
           </strong>
           <p>{nextStep}</p>
-          {result.ticket_id && <code className="ticket-id">{result.ticket_id}</code>}
+          {result.ticket_id && <code className="ticket-stamp">{result.ticket_id}</code>}
         </div>
       )}
 
@@ -117,7 +122,7 @@ export default function RequestPage() {
               <button
                 key={s.label}
                 type="button"
-                className="chip"
+                className={message === s.text ? "chip active" : "chip"}
                 onClick={() => setMessage(s.text)}
               >
                 {s.label}
@@ -147,12 +152,13 @@ export default function RequestPage() {
           {result && (
             <div style={{ marginTop: "1rem" }}>
               <span
-                className={`badge ${result.status === "dispatched"
-                  ? "ok"
-                  : result.status === "pending_hitl"
-                    ? "warn"
-                    : "neutral"
-                  }`}
+                className={`badge ${
+                  result.status === "dispatched"
+                    ? "ok"
+                    : result.status === "pending_hitl"
+                      ? "warn"
+                      : "neutral"
+                }`}
               >
                 {result.status}
               </span>
