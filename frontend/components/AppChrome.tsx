@@ -97,6 +97,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             >
               Request aid
             </Link>
+            <Link href="/status" className={pathname === "/status" ? "active" : undefined}>
+              Check status
+            </Link>
             <Link href="/login" className={pathname === "/login" ? "active" : undefined}>
               Staff sign in
             </Link>

@@ -138,6 +138,12 @@
 **Decision:** Merge `polished` into `main`. Keep LangGraph `interrupt_before=["hitl_gate"]` and trace dedupe. Stream SSE `agent_step` per node so the public pipeline is live. SOP citations = purpose + complete points (no markdown tables). pytest/SQLite remains the no-Docker gate. Live GCP stays Postgres.  
 **Status:** accepted
 
+### 2026-09-03 — Public citizen status (ticket + phone)
+
+**Context:** After submit, the winning signal lived only on `/request`. Leaving the page left no return path. Staff had tickets; guests did not.  
+**Decision:** No citizen accounts, no phone-only inbox. Mint `AKD-…` at intake (including HITL). Guest `POST /api/v1/public/status` + public `/status` require ticket + the same phone. Wrong pair → generic 404. Citizen DTO only (no trace, risk, HITL notes, volunteer phone). WhatsApp stays a stub.  
+**Status:** accepted
+
 ### 2026-09-03 — Sitrep visual system (landing + whole product)
 
 **Context:** Landing read as a generic light-green NGO page (Segoe, cream). Regional demo needs a first-screen that looks like an Alkhidmat ops desk.  

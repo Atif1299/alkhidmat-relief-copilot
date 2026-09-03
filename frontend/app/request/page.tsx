@@ -74,11 +74,14 @@ export default function RequestPage() {
     }
   }
 
+  const ticket = result?.ticket_id;
   const nextStep =
-    result?.status === "dispatched" && result.ticket_id
-      ? `Your ticket is ${result.ticket_id}. A volunteer will follow up.`
+    result?.status === "dispatched" && ticket
+      ? `Your request number is ${ticket}. A volunteer will follow up. Check status anytime.`
       : result?.status === "pending_hitl"
-        ? "Your request is waiting for supervisor review. You will get a ticket after approval."
+        ? ticket
+          ? `Your request number is ${ticket}. Waiting for supervisor. Check status anytime.`
+          : "Your request is waiting for supervisor review."
         : null;
 
   return (
@@ -111,6 +114,13 @@ export default function RequestPage() {
           </strong>
           <p>{nextStep}</p>
           {result.ticket_id && <code className="ticket-stamp">{result.ticket_id}</code>}
+          {result.ticket_id && (
+            <p>
+              <Link href={`/status?ticket=${encodeURIComponent(result.ticket_id)}`}>
+                Check status anytime →
+              </Link>
+            </p>
+          )}
         </div>
       )}
 

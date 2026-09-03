@@ -43,11 +43,11 @@ Active plan copy: [.cursor/gcp_cloud_run_deploy.plan.md](../.cursor/gcp_cloud_ru
 2. Secret Manager: add `jwt-secret` (map to `JWT_SECRET` on Cloud Run) — **required**; deploy script creates if missing.
 3. Redeploy API/web via `deploy/gcp/03_build_and_deploy.sh`.
 4. Confirm `/health` shows `"tier": "3"` and staff login works on live URL.
-5. Confirm **public** aid path: open live web `/request`, submit without login (API guest `POST /chat` must not require JWT).
+5. Confirm **public** aid path: open live web `/request`, submit without login (API guest `POST /chat` must not require JWT). Confirm **`/status`** with the AKD number + phone (or seed `AKD-SEED-001` / `03001234567`).
 6. Reindex SOPs (startup embeds when `DASHSCOPE_API_KEY` set and chunks lack embeddings).
 7. CORS: deploy script sets `CORS_ORIGINS` to the live web URL after web deploy.
 
-**Product IA on live:** Landing `/` → Request aid (guest) or Staff sign in (JWT). Ops routes stay authenticated.
+**Product IA on live:** Landing `/` → Request aid / Check status (guest) or Staff sign in (JWT). Ops routes stay authenticated.
 
 ---
 
@@ -157,11 +157,12 @@ curl -s https://relief-api-4idrhaffca-el.a.run.app/health
 Browser on **https://relief-web-4idrhaffca-el.a.run.app**:
 
 1. `/` — sitrep board replays and stamps a demo ticket (no login, no API)
-2. `/request` as a **guest** (no JWT) — Urdu food → ticket. A leftover staff token must not 401.
-3. `/login` as `supervisor@aiddesk.example` / `AidDesk!2026`
-4. Duplicate `03001234567` / critical medical → Supervisor → Approve
-5. Case detail → timeline + Export PDF
-6. Logout → landing still public (Request aid, no staff nav)  
+2. `/request` as a **guest** (no JWT) — Urdu food → AKD number on screen. A leftover staff token must not 401.
+3. `/status` with that number + phone — or demo chips `AKD-SEED-001` / `03001234567` (dispatched) and `AKD-SEED-006` / `03019991111` (waiting)
+4. `/login` as `supervisor@aiddesk.example` / `AidDesk!2026`
+5. Duplicate `03001234567` / critical medical → Supervisor → Approve
+6. Case detail → timeline + Export PDF
+7. Logout → landing still public (Request aid, Check status, no staff nav)  
 
 **Reindex SOPs on Cloud SQL (optional one-off):**
 

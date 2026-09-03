@@ -16,7 +16,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.agents.graph import close_graph, init_graph
-from app.api import auth, cases, chat, metrics, supervisor
+from app.api import auth, cases, chat, metrics, public, supervisor
 from app.config import settings
 from app.db.seed import run_seed
 from app.db.session import init_db
@@ -70,6 +70,7 @@ app.include_router(chat.router)
 app.include_router(cases.router)
 app.include_router(supervisor.router)
 app.include_router(metrics.router)
+app.include_router(public.router)
 
 
 @app.get("/health")

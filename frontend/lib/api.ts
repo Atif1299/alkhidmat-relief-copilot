@@ -231,3 +231,32 @@ export async function downloadCasePdf(caseId: string, filename?: string) {
 export function requireTokenOrThrow() {
   if (!getToken()) throw new Error("Not logged in");
 }
+
+export type PublicStatus = {
+  ticket_id: string;
+  status: string;
+  category?: string | null;
+  next_action: string;
+  timeline: {
+    key: string;
+    label: string;
+    state: "done" | "active" | "pending" | "skipped";
+    detail?: string | null;
+    at?: string | number | null;
+  }[];
+  resource_name?: string | null;
+  volunteer_name?: string | null;
+};
+
+export async function lookupStatus(ticketId: string, phone: string): Promise<PublicStatus> {
+  const res = await fetch(`${API_URL}/api/v1/public/status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ticket_id: ticketId, phone }),
+  });
+  if (res.status === 404) {
+    throw new Error("Request not found");
+  }
+  if (!res.ok) throw new Error(`Status lookup failed: ${res.status}`);
+  return res.json();
+}

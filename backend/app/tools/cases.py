@@ -12,6 +12,11 @@ from app.db.models import Case, Resource, Volunteer
 from app.services.audit import log_event
 
 
+def mint_ticket_id() -> str:
+    """Receipt stamped at intake — not only at Dispatch."""
+    return f"AKD-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+
+
 def search_similar_cases(
     db: Session,
     *,
@@ -86,6 +91,10 @@ def ensure_draft_case(
     """Insert a processing row early so case_events FK works on Postgres."""
     existing = db.query(Case).filter(Case.id == case_id).first()
     if existing:
+        if not existing.ticket_id:
+            existing.ticket_id = mint_ticket_id()
+            db.commit()
+            db.refresh(existing)
         return {"id": existing.id, "ticket_id": existing.ticket_id, "status": existing.status}
     return create_case(
         db,
@@ -98,11 +107,10 @@ def ensure_draft_case(
 
 
 def create_case(db: Session, *, case_id: str, raw_message: str, **fields: Any) -> dict[str, Any]:
-    status = fields.get("status", "processing")
     ticket_id = fields.get("ticket_id")
     actor_for_create = fields.pop("actor_for_create", "Dispatch")
-    if not ticket_id and status in ("open", "dispatched"):
-        ticket_id = f"AKD-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+    if not ticket_id:
+        ticket_id = mint_ticket_id()
         fields["ticket_id"] = ticket_id
 
     allowed = {k: v for k, v in fields.items() if hasattr(Case, k) and v is not None}

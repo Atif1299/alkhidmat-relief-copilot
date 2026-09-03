@@ -40,7 +40,7 @@
 
 ## Capabilities
 
-- **Public request path** — `/` sitrep landing → `/request` guest intake (no citizen account)
+- **Public request path** — `/` sitrep landing → `/request` guest intake → `/status` with AKD number + phone (no citizen account)
 - **Staff ops** — JWT roles (desk / supervisor); home `/tickets`
 - **Agent trace** — live pipeline + sitrep replay on the landing (replay is local, not an LLM call)
 - **Integrity** — duplicate / risk checks; never skipped on create
@@ -88,7 +88,7 @@ copy .env.local.example .env.local
 npm run dev
 ```
 
-Open **http://localhost:3000/** (public landing). Citizens use **/request**; staff use **/login**.
+Open **http://localhost:3000/** (public landing). Citizens use **/request** and **/status**; staff use **/login**.
 
 ### Tests
 
@@ -100,9 +100,9 @@ pytest -q
 
 ## Demo paths
 
-1. Urdu/English food request → Food ticket + resource match  
-2. Duplicate phone → HITL pending  
-3. Critical medical → Supervisor approve → ticket  
+1. Urdu/English food request → AKD number + resource match → Check status  
+2. Duplicate phone → HITL pending (still has an AKD number)  
+3. Critical medical → Supervisor approve → dispatched  
 
 See [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
 

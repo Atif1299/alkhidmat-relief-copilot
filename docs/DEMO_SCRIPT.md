@@ -13,7 +13,7 @@
 | supervisor@aiddesk.example | Supervisor | Full ops + HITL |
 | Password (both) | | `AidDesk!2026` |
 
-Citizens do **not** log in — they use **Request aid**.
+Citizens do **not** log in — they use **Request aid** and **Check status**.
 
 ## Script
 
@@ -25,7 +25,7 @@ Aid requests hit NGOs as messy Urdu/English messages — wrong routing, duplicat
 
 Open **/**. The **Lahore desk sitrep** board replays Intake → Dispatch and stamps `AKD-SITREP-7AB355` (~8s). This is a local choreography — **not** a live API call. Point to:
 
-- Dual CTAs: **Request aid** vs **Staff sign in**
+- Dual CTAs: **Request aid**, **Check status**, **Staff sign in**
 - Urdu lockup `امداد ڈیسک` in the header
 - Footer strip: Qwen · DashScope · LangGraph · FastAPI · Cloud Run
 - HITL callout (saffron) — “human when it matters”
@@ -39,9 +39,11 @@ Intake → Triage → **Knowledge** → Integrity → Matcher → Dispatch → *
 
 Show **SOP citations** as readable purpose + bullets (not raw markdown). No login required.
 
+Open **Check status** (nav or the outcome link). Paste the AKD number + the same phone. Sitrep shows **dispatched** (resource + volunteer name). Demo chips without a live submit: `AKD-SEED-001` / `03001234567` (dispatched) vs `AKD-SEED-006` / `03019991111` (still waiting).
+
 ### 3. Integrity / HITL (40s)
 
-Still on Request aid (or staff Test intake), run **EN · Duplicate** or **Critical · Medical**. Pipeline **holds on Integrity**. Banner: **Waiting for supervisor**. Trace includes Supervisor awaiting — Intake/Triage appear once.
+Still on Request aid (or staff Test intake), run **EN · Duplicate** or **Critical · Medical**. Pipeline **holds on Integrity**. Banner: **Waiting for supervisor** — still shows an AKD number. Trace includes Supervisor awaiting — Intake/Triage appear once. Check status on that number stays **waiting** until approve.
 
 **Staff sign in** as `supervisor@aiddesk.example`. Land on **Tickets**. Open **Supervisor**, **Approve**. Show ticket created. Open **Dashboard** — cases, time-to-ticket, pending HITL.
 

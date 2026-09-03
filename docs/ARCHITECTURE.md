@@ -14,8 +14,8 @@ NGO **Aid Desk SaaS**: Urdu/English request → verified ticket with HITL — JW
 | LLM | DashScope Qwen |
 | Knowledge | SOP files → embeddings (DashScope) → **pgvector / cosine** + keyword fallback |
 | Auth | JWT (HS256) + bcrypt; roles `requester` \| `desk` \| `supervisor` |
-| API | FastAPI + SSE; **guest** `POST /chat` allowed |
-| UI | Next.js 14 — sitrep landing + `/request` guest, staff `/login` |
+| API | FastAPI + SSE; **guest** `POST /chat` and `POST /public/status` |
+| UI | Next.js 14 — sitrep landing + `/request` + `/status` guest, staff `/login` |
 | DB | **Docker Postgres + pgvector** locally; Cloud SQL on GCP |
 | PDF | reportlab |
 | Deploy | GCP Cloud Run — [DEPLOYMENT.md](DEPLOYMENT.md) |
@@ -27,16 +27,19 @@ NGO **Aid Desk SaaS**: Urdu/English request → verified ticket with HITL — JW
 ```mermaid
 flowchart LR
   Landing["/ landing"] --> Request["/request guest"]
+  Landing --> Status["/status guest"]
   Landing --> Login["/login staff"]
   Request --> Graph["LangGraph pipeline"]
-  Graph --> TicketOrHITL["ticket or pending_HITL"]
+  Graph --> TicketOrHITL["AKD receipt or pending_HITL"]
+  TicketOrHITL --> Status
   Login --> Ops["tickets dashboard supervisor"]
 ```
 
 | Route | Who | Auth |
 |-------|-----|------|
-| `/` | Everyone | Sitrep landing (choreographed pipeline + Request aid / Staff sign in) |
+| `/` | Everyone | Sitrep landing (choreographed pipeline + Request aid / Check status / Staff sign in) |
 | `/request` | Citizens | **No account** — anonymous chat API |
+| `/status` | Citizens | **No account** — `POST /api/v1/public/status` with AKD number + phone |
 | `/login` | Desk / Supervisor | JWT |
 | `/tickets`, `/dashboard`, `/supervisor`, `/cases/[id]` | Staff | JWT (role-gated) |
 | `/chat` | Staff | JWT — test intake sandbox |
@@ -59,10 +62,11 @@ Compile uses LangGraph `interrupt_before=["hitl_gate"]` so approve does **not** 
 ## Architecture story (judges / onboarding)
 
 1. Landing `/` is a **field sitrep desk** (forest + brass, IBM Plex + Noto Nastaliq, bilingual lockup). The hero board *replays* the six agents and stamps a demo ticket — no LLM call on page load.
-2. Citizen describes need in Urdu or English on **Request aid** (no signup). Public chat is **anonymous**: a leftover staff JWT must not 401 guest intake.
+2. Citizen describes need in Urdu or English on **Request aid** (no signup). Every intake mints an **AKD receipt** immediately, including HITL. Public chat is **anonymous**: a leftover staff JWT must not 401 guest intake.
 3. The **live desk pipeline** lights each agent as it runs (green ring = in process). High-risk cases **hold on Integrity** until Supervisor approve/reject.
-4. SOP citations are purpose + complete rules/phrases (not raw markdown tables).
-5. Desk operators see tickets, timeline, agent trace, and PDF export.
+4. Citizen can leave and return on **Check status** (`/status`) with the AKD number plus the same phone. Wrong pair is a generic 404 — no phone-only inbox, no staff fields.
+5. SOP citations are purpose + complete rules/phrases (not raw markdown tables).
+6. Desk operators see tickets, timeline, agent trace, and PDF export.
 
 ## Tier 3 modules
 
@@ -79,7 +83,7 @@ Compile uses LangGraph `interrupt_before=["hitl_gate"]` so approve does **not** 
 |-------|------|----------|
 | desk@aiddesk.example | desk | Staff sign in |
 | supervisor@aiddesk.example | supervisor | Staff sign in |
-| citizen@aiddesk.example | requester | Seeded for API tests; citizens use `/request` without login |
+| citizen@aiddesk.example | requester | Seeded for API tests; citizens use `/request` and `/status` without login |
 
 ## Cloud mapping
 

@@ -130,7 +130,7 @@ def build_timeline(case: Case, events: list[dict[str, Any]]) -> list[dict[str, A
         add(
             "dispatched",
             "Dispatched",
-            done=case.status in ("dispatched", "closed") or bool(case.ticket_id),
+            done=case.status in ("dispatched", "closed"),
             active=case.status == "dispatched",
             detail=case.ticket_id,
         )
@@ -143,3 +143,40 @@ def build_timeline(case: Case, events: list[dict[str, Any]]) -> list[dict[str, A
         )
 
     return stages
+
+
+def citizen_timeline(case: Case, events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Public stages: skip unused HITL, strip staff-only detail."""
+    out: list[dict[str, Any]] = []
+    for stage in build_timeline(case, events):
+        if stage.get("state") == "skipped":
+            continue
+        key = stage.get("key")
+        detail: Optional[str]
+        if key == "requested":
+            detail = "Your request was received"
+        elif key == "triaged":
+            detail = stage.get("detail")
+        elif key == "knowledge":
+            titles = ", ".join(
+                h.get("title", "") for h in (case.sop_hits or []) if h.get("title")
+            )
+            detail = titles or None
+        elif key == "integrity_checked":
+            detail = "Desk checks complete"
+        elif key == "pending_hitl":
+            detail = (
+                "Waiting for supervisor"
+                if stage.get("state") == "active"
+                else "Supervisor reviewed"
+            )
+        elif key == "matched":
+            detail = stage.get("detail")
+        elif key == "dispatched":
+            detail = case.ticket_id
+        elif key == "rejected":
+            detail = "Not approved"
+        else:
+            detail = None
+        out.append({**stage, "detail": detail})
+    return out

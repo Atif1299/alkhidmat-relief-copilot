@@ -34,6 +34,7 @@ async def chat(body: ChatRequest, _user: OptionalChatUser):
                 "data": json.dumps(
                     {
                         "case_id": result.get("case_id"),
+                        "ticket_id": result.get("ticket_id"),
                         "status": "pending_hitl",
                         "priority": result.get("priority"),
                         "integrity": result.get("integrity"),
@@ -41,7 +42,7 @@ async def chat(body: ChatRequest, _user: OptionalChatUser):
                     ensure_ascii=False,
                 ),
             }
-        if result.get("ticket_id"):
+        if result.get("ticket_id") and result.get("status") == "dispatched":
             yield {
                 "event": "ticket_created",
                 "data": json.dumps(

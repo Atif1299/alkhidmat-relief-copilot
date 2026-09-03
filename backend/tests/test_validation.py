@@ -64,3 +64,13 @@ def test_decide_rejects_oversized_note(client, auth_headers):
 def test_anonymous_cases_forbidden(client):
     r = client.get("/api/v1/cases")
     assert r.status_code == 401
+
+
+def test_status_rejects_blank_ticket(client):
+    r = client.post("/api/v1/public/status", json={"ticket_id": "   ", "phone": "03001234567"})
+    assert r.status_code == 422
+
+
+def test_status_rejects_short_phone(client):
+    r = client.post("/api/v1/public/status", json={"ticket_id": "AKD-SEED-001", "phone": "123"})
+    assert r.status_code == 422

@@ -17,12 +17,15 @@ export default function HomePage() {
           </p>
           <p className="landing-lede">
             Submit in Urdu or English. The desk runs Intake → Triage → Knowledge → Integrity →
-            Matcher → Dispatch. You leave with a ticket ID, a resource match, or a supervisor
-            hold — never a silent queue.
+            Matcher → Dispatch. You leave with a request number you can check later — or a
+            supervisor hold. Never a silent queue.
           </p>
           <div className="landing-ctas">
             <Link className="btn btn-lg" href="/request">
               Request aid
+            </Link>
+            <Link className="btn secondary btn-lg" href="/status">
+              Check status
             </Link>
             <Link className="btn secondary btn-lg" href="/login">
               Staff sign in
@@ -48,7 +51,7 @@ export default function HomePage() {
           <li>
             <span className="step-num">3</span>
             <strong>You know what is next</strong>
-            <p className="muted">Ticket ID and volunteer — or waiting for supervisor on high risk.</p>
+            <p className="muted">Request number plus phone — check status anytime, even after you leave.</p>
           </li>
         </ol>
       </section>
@@ -70,6 +73,12 @@ export default function HomePage() {
           <strong>Need help</strong>
           <p className="muted" style={{ margin: 0 }}>
             Public request desk. Guest intake, live pipeline, ticket or supervisor hold.
+          </p>
+        </Link>
+        <Link className="door" href="/status">
+          <strong>Check status</strong>
+          <p className="muted" style={{ margin: 0 }}>
+            Track with your request number and the phone you gave. No account.
           </p>
         </Link>
         <Link className="door" href="/login">

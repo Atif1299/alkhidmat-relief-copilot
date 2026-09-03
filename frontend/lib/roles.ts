@@ -3,7 +3,7 @@ export type DeskRole = "requester" | "desk" | "supervisor";
 export const ROLE_KEY = "aiddesk_role";
 
 /** Routes anyone can open without a JWT. */
-export const PUBLIC_PATHS = ["/", "/request", "/login"] as const;
+export const PUBLIC_PATHS = ["/", "/request", "/status", "/login"] as const;
 
 export function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname as (typeof PUBLIC_PATHS)[number])) return true;

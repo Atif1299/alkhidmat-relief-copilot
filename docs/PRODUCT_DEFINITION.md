@@ -28,7 +28,7 @@ An **agentic operations desk for relief NGOs** that turns a messy Urdu/English a
 | **Supervisor** | Approves critical / high-risk cases |
 
 **Winning signal (from training playbook):**  
-The desk operator (and requester) **knows what happens next** — ticket ID, category, matched resource, or “waiting for supervisor.”
+The desk operator (and requester) **knows what happens next** — ticket ID, category, matched resource, or “waiting for supervisor.” The citizen can leave and **check status later** with that AKD number plus the phone they gave (no account).
 
 ---
 

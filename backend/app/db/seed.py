@@ -14,6 +14,8 @@ from app.tools.sops import index_sops_from_files
 
 # Demo duplicate phone (Tier A acceptance)
 DUPLICATE_DEMO_PHONE = "03001234567"
+HITL_STATUS_DEMO_TICKET = "AKD-SEED-006"
+HITL_STATUS_DEMO_PHONE = "03019991111"
 
 # Tier 3 seeded users (demo password for all)
 DEMO_PASSWORD = "AidDesk!2026"
@@ -84,12 +86,16 @@ def _uid() -> str:
 
 def _seed_historical_cases(db: Session) -> None:
     """Preload cases + events for duplicate demo and timeline polish."""
+    db.flush()
     now = datetime.utcnow()
     food_case_id = _uid()
     medical_case_id = _uid()
     shelter_case_id = _uid()
     blood_case_id = _uid()
     edu_case_id = _uid()
+    hitl_case_id = _uid()
+    kitchen = db.query(Resource).filter(Resource.name == "Alkhidmat Lahore Kitchen").first()
+    volunteer = db.query(Volunteer).filter(Volunteer.name == "Ahmed Khan").first()
 
     cases = [
         Case(
@@ -107,6 +113,8 @@ def _seed_historical_cases(db: Session) -> None:
             risk_score=0.1,
             duplicate_flag=False,
             requires_hitl=False,
+            matched_resource_id=kitchen.id if kitchen else None,
+            volunteer_id=volunteer.id if volunteer else None,
             agent_trace=[
                 {"agent": "Intake", "action": "extracted"},
                 {"agent": "Triage", "action": "classified", "detail": "Food"},
@@ -195,6 +203,30 @@ def _seed_historical_cases(db: Session) -> None:
             created_at=now - timedelta(days=4),
             time_to_ticket_ms=35000,
         ),
+        Case(
+            id=hitl_case_id,
+            ticket_id=HITL_STATUS_DEMO_TICKET,
+            raw_message="Chest pain, need ambulance, Johar Town. Phone 03019991111",
+            language="en",
+            category="Medical",
+            priority="critical",
+            status="pending_hitl",
+            requester_name="HITL Demo",
+            requester_phone=HITL_STATUS_DEMO_PHONE,
+            location="Johar Town Lahore",
+            need_summary="Ambulance for chest pain",
+            risk_score=0.9,
+            duplicate_flag=False,
+            requires_hitl=True,
+            agent_trace=[
+                {"agent": "Intake", "action": "extracted"},
+                {"agent": "Triage", "action": "classified", "detail": "Medical critical"},
+                {"agent": "Knowledge", "action": "sop_retrieved", "detail": "Medical Emergency SOP"},
+                {"agent": "Integrity", "action": "escalated", "detail": "Critical priority"},
+                {"agent": "Supervisor", "action": "awaiting", "detail": "Paused for human approval"},
+            ],
+            created_at=now - timedelta(minutes=25),
+        ),
     ]
     db.add_all(cases)
 
@@ -216,6 +248,10 @@ def _seed_historical_cases(db: Session) -> None:
         (blood_case_id, "system", "closed", "Fulfilled"),
         (edu_case_id, "system", "requested", "Case received"),
         (edu_case_id, "Dispatch", "dispatched", "Ticket AKD-SEED-005"),
+        (hitl_case_id, "system", "requested", "Case received"),
+        (hitl_case_id, "Triage", "triaged", "Category Medical"),
+        (hitl_case_id, "Knowledge", "sop_retrieved", "Medical Emergency SOP"),
+        (hitl_case_id, "Integrity", "escalated", "Critical priority"),
     ]
     for case_id, actor, event_type, detail in events:
         db.add(
@@ -226,6 +262,54 @@ def _seed_historical_cases(db: Session) -> None:
                 detail=detail,
             )
         )
+
+
+def _seed_hitl_status_demo(db: Session) -> None:
+    """Top-up a waiting HITL ticket for the public status demo."""
+    hitl_case_id = _uid()
+    now = datetime.utcnow()
+    db.add(
+        Case(
+            id=hitl_case_id,
+            ticket_id=HITL_STATUS_DEMO_TICKET,
+            raw_message="Chest pain, need ambulance, Johar Town. Phone 03019991111",
+            language="en",
+            category="Medical",
+            priority="critical",
+            status="pending_hitl",
+            requester_name="HITL Demo",
+            requester_phone=HITL_STATUS_DEMO_PHONE,
+            location="Johar Town Lahore",
+            need_summary="Ambulance for chest pain",
+            risk_score=0.9,
+            duplicate_flag=False,
+            requires_hitl=True,
+            agent_trace=[
+                {"agent": "Intake", "action": "extracted"},
+                {"agent": "Triage", "action": "classified", "detail": "Medical critical"},
+                {"agent": "Knowledge", "action": "sop_retrieved", "detail": "Medical Emergency SOP"},
+                {"agent": "Integrity", "action": "escalated", "detail": "Critical priority"},
+                {"agent": "Supervisor", "action": "awaiting", "detail": "Paused for human approval"},
+            ],
+            created_at=now - timedelta(minutes=25),
+        )
+    )
+    db.add(
+        CaseEvent(
+            case_id=hitl_case_id,
+            actor="system",
+            event_type="requested",
+            detail="Case received",
+        )
+    )
+    db.add(
+        CaseEvent(
+            case_id=hitl_case_id,
+            actor="Integrity",
+            event_type="escalated",
+            detail="Critical priority",
+        )
+    )
 
 
 def seed_if_empty(db: Session) -> dict:
@@ -304,6 +388,8 @@ def seed_if_empty(db: Session) -> dict:
         if demo:
             demo.created_at = datetime.utcnow()
             demo.status = "dispatched"
+        if not db.query(Case).filter(Case.ticket_id == HITL_STATUS_DEMO_TICKET).first():
+            _seed_hitl_status_demo(db)
 
     sop_count = index_sops_from_files(db)
 

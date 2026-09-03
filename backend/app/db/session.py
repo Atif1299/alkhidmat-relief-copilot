@@ -17,6 +17,7 @@ def _make_engine():
             pool_pre_ping=True,
             pool_size=5,
             max_overflow=5,
+            connect_args={"connect_timeout": 5},
         )
     db_file = settings.db_path
     db_file.parent.mkdir(parents=True, exist_ok=True)

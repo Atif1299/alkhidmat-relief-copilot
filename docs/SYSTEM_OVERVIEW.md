@@ -54,7 +54,7 @@ NGO relief desks (like Alkhidmat Lahore) receive aid requests as:
 
 | Role | Who | What they do | UI entry |
 |------|-----|--------------|----------|
-| **Citizen / Requester** | Public | Submits aid need (no account) | `/request` |
+| **Citizen / Requester** | Public | Submits aid need; checks status later (no account) | `/request`, `/status` |
 | **Desk operator** | NGO staff | Views tickets, traces, metrics | `/login` → `/tickets` |
 | **Supervisor** | Senior staff | Approves/rejects high-risk cases | `/login` → `/supervisor` |
 
@@ -64,7 +64,7 @@ NGO relief desks (like Alkhidmat Lahore) receive aid requests as:
 |-------|------|
 | `desk@aiddesk.example` | desk |
 | `supervisor@aiddesk.example` | supervisor |
-| `citizen@aiddesk.example` | requester (API tests only; citizens use `/request` without login) |
+| `citizen@aiddesk.example` | requester (API tests only; citizens use `/request` and `/status` without login) |
 
 ---
 
@@ -95,12 +95,12 @@ NGO relief desks (like Alkhidmat Lahore) receive aid requests as:
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         FRONTEND (Next.js 14)                           │
-│  / landing  │  /request (guest)  │  /login  │  /tickets  │  /supervisor │
+│  / landing  │  /request  │  /status  │  /login  │  /tickets  │  /supervisor │
 └──────────────────────────────┬──────────────────────────────────────────┘
                                │ HTTP / SSE
 ┌──────────────────────────────▼──────────────────────────────────────────┐
 │                         BACKEND (FastAPI)                               │
-│  /api/v1/chat  │  /cases  │  /supervisor  │  /metrics  │  /auth        │
+│  /chat  │  /public/status  │  /cases  │  /supervisor  │  /metrics  │  /auth |
 └──────────────────────────────┬──────────────────────────────────────────┘
                                │
 ┌──────────────────────────────▼──────────────────────────────────────────┐
@@ -206,7 +206,8 @@ Every step appends to `agent_trace` — a JSON array of `{agent, action, detail,
    - **Pipeline strip** (which agents ran)
    - **Agent trace** (step-by-step log)
    - **SOP citations** (what Knowledge retrieved)
-   - **Result**: ticket ID, HITL pending, or rejection
+   - **Result**: AKD request number (minted at intake, including HITL), or wait-for-supervisor
+6. Later, citizen opens **`/status`** with that number plus the same phone (no account)
 
 ### B. Supervisor approves HITL case
 
@@ -314,6 +315,7 @@ frontend/
 |-------|------|---------|
 | `/` | Public | Landing page |
 | `/request` | **None** (guest chat) | Citizen aid intake |
+| `/status` | **None** (guest) | Look up request with AKD number + phone |
 | `/login` | Public | Staff sign-in |
 | `/tickets` | JWT (desk+) | Case management |
 | `/cases/[id]` | JWT (requester+) | Case detail |
@@ -348,7 +350,7 @@ frontend/
 
 ### Ticket ID format
 
-`AKD-YYYYMMDD-XXXXXX` (e.g. `AKD-20260830-A1B2C3`)
+`AKD-YYYYMMDD-XXXXXX` (e.g. `AKD-20260830-A1B2C3`) — minted at intake, not only at Dispatch.
 
 ---
 
@@ -361,6 +363,7 @@ frontend/
 | GET | `/api/v1/auth/me` | JWT | Current user |
 | POST | `/api/v1/chat` | Optional | SSE agent pipeline |
 | POST | `/api/v1/chat/sync` | Optional | Sync pipeline (tests) |
+| POST | `/api/v1/public/status` | None | Citizen lookup: ticket + phone; 404 on mismatch |
 | GET | `/api/v1/cases` | desk | List cases |
 | GET | `/api/v1/cases/{id}` | requester+ | Case + timeline |
 | GET | `/api/v1/cases/{id}/timeline` | desk | Lifecycle stages |
@@ -369,7 +372,8 @@ frontend/
 | POST | `/api/v1/supervisor/{id}/decide` | supervisor | approve / reject |
 | GET | `/api/v1/metrics` | desk | Dashboard stats |
 
-**Guest chat:** `/request` works without login — `OptionalChatUser` allows anonymous `POST /chat`.
+**Guest chat:** `/request` works without login — `OptionalChatUser` allows anonymous `POST /chat`.  
+**Guest status:** `/status` calls `POST /api/v1/public/status` with no JWT. Wrong ticket or phone returns the same 404 (`Request not found`). Payload is citizen-only (no trace, risk, HITL notes, volunteer phone).
 
 ---
 
@@ -554,7 +558,7 @@ WhatsApp production, real Alkhidmat API, mobile apps, billing, CNIC OCR.
 |----------|-----|
 | LangGraph over Hermes | Deterministic NGO workflow + HITL interrupt |
 | Integrity never skipped | Fraud/duplicate protection is core product value |
-| Guest `/request` | Citizens don't need accounts during disasters |
+| Guest `/request` + `/status` | Citizens don't need accounts; they track with AKD number + phone |
 | SSE for chat | Operators see agents work in real time |
 | Mock LLM mode | Tests and offline dev without API costs |
 | Postgres checkpoints (Linux) | Durable HITL pause/resume across restarts |
@@ -572,7 +576,7 @@ Full log: [DECISIONS.md](DECISIONS.md)
 | **SOP** | Standard Operating Procedure — NGO rules stored as markdown |
 | **Agent trace** | JSON log of every agent step for a case |
 | **Case** | Internal UUID record for one aid request |
-| **Ticket** | Public ID (`AKD-...`) given to requester after dispatch |
+| **Ticket** | Public receipt (`AKD-...`) minted at intake; Dispatch means verified + matched |
 | **DashScope** | Alibaba Cloud API for Qwen LLM + embeddings |
 | **pgvector** | Postgres extension for cosine similarity search |
 
@@ -588,6 +592,7 @@ Full log: [DECISIONS.md](DECISIONS.md)
 | SOP RAG | `backend/app/tools/sops.py`, `knowledge/sops/*.md` |
 | Duplicate detection | `backend/app/tools/cases.py` → `search_similar_cases()` |
 | Public intake UI | `frontend/app/request/page.tsx` |
+| Public status check | `frontend/app/status/`, `backend/app/api/public.py` |
 | Supervisor UI | `frontend/app/supervisor/page.tsx` |
 | Demo seed data | `backend/app/db/seed.py` |
 | PDF export | `backend/app/services/pdf_export.py` |

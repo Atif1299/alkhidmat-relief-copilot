@@ -54,3 +54,25 @@ class LoginRequest(BaseModel):
         if isinstance(value, str):
             return value.strip().lower()
         return value
+
+
+class StatusRequest(BaseModel):
+    ticket_id: str = Field(min_length=3, max_length=32)
+    phone: str = Field(min_length=6, max_length=32)
+
+    @field_validator("ticket_id")
+    @classmethod
+    def normalize_ticket(cls, value: str) -> str:
+        cleaned = value.strip().upper()
+        if not cleaned:
+            raise ValueError("ticket_id must not be blank")
+        return cleaned
+
+    @field_validator("phone")
+    @classmethod
+    def require_phone_digits(cls, value: str) -> str:
+        cleaned = value.strip()
+        digits = "".join(c for c in cleaned if c.isdigit())
+        if len(digits) < 6:
+            raise ValueError("phone must include at least 6 digits")
+        return cleaned

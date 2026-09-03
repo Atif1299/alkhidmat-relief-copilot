@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import time
 import uuid
-from datetime import datetime
 from typing import Any, Literal
 
 from app.agents.state import CaseState, dedupe_trace
@@ -30,7 +29,7 @@ async def intake_node(state: CaseState) -> dict[str, Any]:
     language = extracted.get("language") or "en"
     db = SessionLocal()
     try:
-        case_tools.ensure_draft_case(
+        draft = case_tools.ensure_draft_case(
             db,
             case_id=case_id,
             raw_message=message,
@@ -45,6 +44,7 @@ async def intake_node(state: CaseState) -> dict[str, Any]:
         db.close()
     return {
         "case_id": case_id,
+        "ticket_id": draft.get("ticket_id"),
         "language": language,
         "extracted": extracted,
         "started_at_ms": state.get("started_at_ms") or _now_ms(),
@@ -205,6 +205,10 @@ async def finalize_hitl_pause(state: CaseState) -> dict[str, Any]:
     db = SessionLocal()
     try:
         existing = case_tools.update_case_fields(db, state["case_id"])
+        ticket_id = (existing.ticket_id if existing else None) or state.get("ticket_id")
+        if not ticket_id:
+            ticket_id = case_tools.mint_ticket_id()
+        payload["ticket_id"] = ticket_id
         if existing is None:
             case_tools.create_case(
                 db,
@@ -218,6 +222,7 @@ async def finalize_hitl_pause(state: CaseState) -> dict[str, Any]:
         db.close()
     return {
         "status": "pending_hitl",
+        "ticket_id": ticket_id,
         "agent_trace": [awaiting],
     }
 
@@ -340,23 +345,26 @@ async def dispatch_node(state: CaseState) -> dict[str, Any]:
         }
 
         existing = case_tools.update_case_fields(db, state["case_id"])
+        ticket_id = (
+            (existing.ticket_id if existing else None)
+            or state.get("ticket_id")
+            or fields.get("ticket_id")
+        )
+        if not ticket_id:
+            ticket_id = case_tools.mint_ticket_id()
+        fields["ticket_id"] = ticket_id
         if existing is None:
-            result = case_tools.create_case(
+            case_tools.create_case(
                 db,
                 case_id=state["case_id"],
                 raw_message=state["raw_message"],
                 agent_trace=state.get("agent_trace") or [],
                 **fields,
             )
-            ticket_id = result.get("ticket_id")
         else:
-            ticket_id = existing.ticket_id
-            if not ticket_id:
-                ticket_id = f"AKD-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
             case_tools.update_case_fields(
                 db,
                 state["case_id"],
-                ticket_id=ticket_id,
                 agent_trace=state.get("agent_trace"),
                 **fields,
             )
