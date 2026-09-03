@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { BrandMark } from "@/components/BrandMark";
 import { clearAuth, getAuthUser, getToken, type AuthUser } from "@/lib/auth";
 import {
   ROLE_LINKS,
@@ -25,6 +26,24 @@ function readSession(): { token: string; user: AuthUser } | null {
     return null;
   }
   return { token, user };
+}
+
+function BrandLockup({ href }: { href: string }) {
+  return (
+    <Link href={href} className="brand">
+      <BrandMark />
+      <span className="brand-text">
+        <span className="brand-name">Alkhidmat Relief Copilot</span>
+        <span className="brand-sub">
+          <span lang="ur" className="urdu">
+            امداد ڈیسک
+          </span>
+          <span aria-hidden="true"> · </span>
+          Aid Desk
+        </span>
+      </span>
+    </Link>
+  );
 }
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
@@ -70,20 +89,20 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     return (
       <div className="shell">
         <header className="topbar public-topbar">
-          <Link href="/" className="brand">
-            Alkhidmat Relief Copilot
-            <span>Aid Desk</span>
-          </Link>
+          <BrandLockup href="/" />
           <nav className="nav public-nav">
-            <Link href="/request" className={pathname === "/request" ? "active" : undefined}>
+            <Link
+              href="/request"
+              className={pathname === "/request" ? "active nav-cta" : "nav-cta"}
+            >
               Request aid
             </Link>
-            <Link href="/login" className={pathname === "/login" ? "active" : "nav-cta"}>
+            <Link href="/login" className={pathname === "/login" ? "active" : undefined}>
               Staff sign in
             </Link>
           </nav>
         </header>
-        <div className={pathname === "/" ? "main main-wide" : "main"}>{children}</div>
+        <div className="main">{children}</div>
       </div>
     );
   }
@@ -92,7 +111,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     return (
       <div className="shell">
         <div className="main">
-          <p className="muted">Loading…</p>
+          <p className="muted">Loading desk…</p>
         </div>
       </div>
     );
@@ -103,18 +122,12 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   return (
     <div className="shell">
       <header className="topbar">
-        <Link href={staffHome(role)} className="brand">
-          Alkhidmat Relief Copilot
-          <span>Aid Desk</span>
-        </Link>
+        <BrandLockup href={staffHome(role)} />
         <div className="topbar-right">
           <span className="role-switch">
-            <span>{email}</span>
-            <strong style={{ marginLeft: 8 }}>{role}</strong>
+            <span className="topbar-email">{email}</span>
+            <span className="role-pill">{role}</span>
           </span>
-          <button type="button" className="btn secondary" onClick={logout}>
-            Log out
-          </button>
           <nav className="nav">
             {links.map((l) => (
               <Link
@@ -126,6 +139,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
           </nav>
+          <button type="button" className="btn topbar-logout" onClick={logout}>
+            Log out
+          </button>
         </div>
       </header>
       <div className="main">{children}</div>
