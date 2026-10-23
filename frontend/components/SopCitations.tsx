@@ -108,48 +108,92 @@ function normalizeHit(hit: SopHit): ParsedSop {
   };
 }
 
-export function SopCitations({ hits }: { hits?: SopHit[] | null }) {
+function categoryTone(category: string): string {
+  if (category === "Integrity") return "warn";
+  if (category === "Language") return "neutral";
+  return "ok";
+}
+
+/**
+ * `full` (staff) shows each SOP's purpose and rules. `titles` (public) names
+ * the guidance only: internal rules such as duplicate windows stay off the
+ * citizen page.
+ */
+export function SopCitations({
+  hits,
+  variant = "full",
+}: {
+  hits?: SopHit[] | null;
+  variant?: "full" | "titles";
+}) {
   if (!hits?.length) {
     return <p className="muted">No SOP citations for this case.</p>;
   }
+  if (variant === "titles") {
+    return (
+      <>
+        <ul className="citation-titles">
+          {hits.map((hit, i) => {
+            const sop = normalizeHit(hit);
+            return (
+              <li key={`${sop.title}-${i}`}>
+                <span>{sop.title}</span>
+                {sop.category ? (
+                  <span className={`badge ${categoryTone(sop.category)}`}>{sop.category}</span>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+        <p className="muted citation-note">
+          The desk followed this guidance. Full rules are visible to staff.
+        </p>
+      </>
+    );
+  }
   return (
-    <ul className="citations">
-      {hits.map((hit, i) => {
-        const sop = normalizeHit(hit);
-        return (
-          <li key={`${sop.title}-${i}`} className="citation-card">
-            <div className="citation-head">
-              <strong>{sop.title}</strong>
-              {sop.category ? <span className="badge ok">{sop.category}</span> : null}
-            </div>
-            {sop.keywords.length > 0 ? (
-              <ul className="citation-kws">
-                {sop.keywords.map((kw) => (
-                  <li key={kw}>{kw}</li>
-                ))}
-              </ul>
-            ) : null}
-            {sop.purpose ? (
-              <p className="citation-purpose">
-                <span className="citation-label">Purpose</span>
-                {sop.purpose}
-              </p>
-            ) : null}
-            {sop.points.length > 0 ? (
-              <div>
-                <p className="citation-label" style={{ margin: "0.55rem 0 0.2rem" }}>
-                  Rules
-                </p>
-                <ol className="citation-points">
-                  {sop.points.map((point) => (
-                    <li key={point}>{point}</li>
-                  ))}
-                </ol>
+    <>
+      <ul className="citations">
+        {hits.map((hit, i) => {
+          const sop = normalizeHit(hit);
+          return (
+            <li key={`${sop.title}-${i}`} className="citation-card">
+              <div className="citation-head">
+                <strong>{sop.title}</strong>
+                {sop.category ? (
+                  <span className={`badge ${categoryTone(sop.category)}`}>{sop.category}</span>
+                ) : null}
               </div>
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
+              {sop.keywords.length > 0 ? (
+                <ul className="citation-kws">
+                  {sop.keywords.map((kw) => (
+                    <li key={kw}>{kw}</li>
+                  ))}
+                </ul>
+              ) : null}
+              {sop.purpose ? (
+                <p className="citation-purpose">
+                  <span className="citation-label">Purpose</span>
+                  {sop.purpose}
+                </p>
+              ) : null}
+              {sop.points.length > 0 ? (
+                <div>
+                  <p className="citation-label" style={{ margin: "0.55rem 0 0.2rem" }}>
+                    Rules
+                  </p>
+                  <ol className="citation-points">
+                    {sop.points.map((point) => (
+                      <li key={point}>{point}</li>
+                    ))}
+                  </ol>
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="muted citation-note">Sample SOPs written for this prototype. Each NGO loads its own.</p>
+    </>
   );
 }

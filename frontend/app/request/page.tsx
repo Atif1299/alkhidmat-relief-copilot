@@ -223,8 +223,8 @@ export default function RequestPage() {
                 {statusLabel(result.status)}
               </span>
               {result.notification && <p>{result.notification}</p>}
-              <h3 style={{ marginTop: "1rem" }}>SOP citations</h3>
-              <SopCitations hits={result.sop_hits} />
+              <h3 style={{ marginTop: "1rem" }}>Guidance used</h3>
+              <SopCitations hits={result.sop_hits} variant="titles" />
             </div>
           )}
         </section>

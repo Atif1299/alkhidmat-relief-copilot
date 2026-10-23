@@ -77,18 +77,13 @@ async def knowledge_node(state: CaseState) -> dict[str, Any]:
     try:
         category = state.get("category") or "Other"
         extracted = state.get("extracted") or {}
+        # Category is a filter, not a search term; location would only add noise.
         query = " ".join(
-            filter(
-                None,
-                [
-                    state.get("raw_message"),
-                    extracted.get("need_summary"),
-                    extracted.get("location"),
-                    category,
-                ],
-            )
+            filter(None, [state.get("raw_message"), extracted.get("need_summary")])
         )
-        hits = sop_tools.search_sops(db, category=category, query=query, limit=3)
+        hits = sop_tools.search_sops(
+            db, category=category, query=query, language=state.get("language")
+        )
         titles = ", ".join(h["title"] for h in hits) if hits else "none"
         mode = (hits[0].get("retrieval_mode") if hits else "keyword") or "keyword"
         log_event(
@@ -144,6 +139,16 @@ async def integrity_node(state: CaseState) -> dict[str, Any]:
             "reasons": reasons,
             "similar_cases": similar[:3],
         }
+        # Cite the Integrity rule that put the case in front of a supervisor.
+        gate_sops: list[str] = []
+        if duplicate:
+            gate_sops.append(sop_tools.INTEGRITY_DUPLICATE_SOP)
+        if requires_hitl and (state.get("priority") == "critical" or not duplicate):
+            gate_sops.append(sop_tools.INTEGRITY_ESCALATION_SOP)
+        sop_hits = sop_tools.merge_sop_hits(
+            state.get("sop_hits") or [],
+            sop_tools.sop_hits_for_files(db, gate_sops, "integrity"),
+        )
         if requires_hitl:
             case_tools.escalate_to_human(
                 db,
@@ -161,6 +166,7 @@ async def integrity_node(state: CaseState) -> dict[str, Any]:
             )
         return {
             "integrity": integrity,
+            "sop_hits": sop_hits,
             "requires_hitl": requires_hitl,
             "status": "pending_hitl" if requires_hitl else "processing",
             "agent_trace": [
