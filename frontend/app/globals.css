@@ -2519,22 +2519,106 @@ a.chip
   color: var(--ink);
 }
 
+/* Fixed layout so the table always fits its panel; long text truncates. */
 .tickets-table
 {
-  min-width: 860px;
+  table-layout: fixed;
+  min-width: 0;
 }
 
-.req-cell
+.tickets-table .col-exp
 {
-  max-width: 300px;
+  width: 44px;
+}
+
+.tickets-table .col-status
+{
+  width: 190px;
+}
+
+.tickets-table .col-cat
+{
+  width: 165px;
+}
+
+.tickets-table .col-area
+{
+  width: 170px;
+}
+
+.tickets-table .col-pdf
+{
+  width: 70px;
+}
+
+.tickets-table td
+{
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticket-line
+{
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .req-text
 {
   display: block;
+  margin-top: 0.15rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.area-line
+{
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.c-pdf
+{
+  text-align: right;
+}
+
+.expand-btn
+{
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--forest);
+  cursor: pointer;
+  transition: transform var(--transition), background var(--transition), color var(--transition);
+}
+
+.expand-btn:hover
+{
+  border-color: var(--canopy);
+}
+
+.expand-btn.open
+{
+  transform: rotate(90deg);
+  background: var(--forest);
+  border-color: var(--forest);
+  color: #fff;
 }
 
 .req-sub
@@ -2550,13 +2634,6 @@ a.chip
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-}
-
-.row-actions
-{
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.3rem;
 }
 
 .icon-btn
@@ -2863,5 +2940,82 @@ a.chip
   .hq-facts
   {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Tickets as stacked cards on narrow screens: no sideways scrolling. */
+@media (max-width: 760px)
+{
+  .tickets-table colgroup,
+  .tickets-table thead
+  {
+    display: none;
+  }
+
+  .tickets-table,
+  .tickets-table tbody
+  {
+    display: block;
+  }
+
+  .tickets-table tr.row-link
+  {
+    display: grid;
+    grid-template-columns: 36px auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "exp main main pdf"
+      ". status cat cat"
+      ". area area area";
+    row-gap: 0.45rem;
+    column-gap: 0.5rem;
+    align-items: center;
+    padding: 0.85rem 0.25rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tickets-table tr.row-link td
+  {
+    min-width: 0;
+    padding: 0;
+    border: none;
+    overflow: visible;
+  }
+
+  .tickets-table .ticket-line,
+  .tickets-table .cat-cell
+  {
+    flex-wrap: wrap;
+    row-gap: 0.3rem;
+  }
+
+  .tickets-table .c-exp { grid-area: exp; }
+  .tickets-table .c-main { grid-area: main; }
+  .tickets-table .c-pdf { grid-area: pdf; }
+  .tickets-table .c-status { grid-area: status; }
+  .tickets-table .c-cat { grid-area: cat; }
+
+  .tickets-table .c-area
+  {
+    grid-area: area;
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .tickets-table .c-area .req-sub
+  {
+    margin: 0;
+  }
+
+  .tickets-table tr.trace-row
+  {
+    display: block;
+  }
+
+  .tickets-table tr.trace-row td
+  {
+    display: block;
   }
 }

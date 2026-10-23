@@ -204,16 +204,25 @@ export default function TicketsPage() {
         ) : (
           <div className="table-wrap">
             <table className="table dash-table tickets-table">
+              <colgroup>
+                <col className="col-exp" />
+                <col />
+                <col className="col-status" />
+                <col className="col-cat" />
+                <col className="col-area" />
+                <col className="col-pdf" />
+              </colgroup>
               <thead>
                 <tr>
-                  <th>Ticket</th>
-                  <th>Request</th>
+                  <th>
+                    <span className="sr-only">Agent trace</span>
+                  </th>
+                  <th>Ticket and request</th>
                   <th>Status</th>
                   <th>Category</th>
-                  <th>Area</th>
-                  <th>Received</th>
+                  <th>Area · received</th>
                   <th>
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">Export</span>
                   </th>
                 </tr>
               </thead>
@@ -231,20 +240,34 @@ export default function TicketsPage() {
                           if (e.key === "Enter") openCase(c.id);
                         }}
                       >
-                        <td>
-                          <span className="mono">{c.ticket_id || "—"}</span>
-                          {c.duplicate_flag ? <span className="badge warn dup-badge">duplicate</span> : null}
+                        <td className="c-exp">
+                          <button
+                            type="button"
+                            className={`expand-btn ${open ? "open" : ""}`}
+                            aria-expanded={open}
+                            aria-label={open ? "Hide agent trace" : "Show agent trace"}
+                            title={open ? "Hide agent trace" : "Show agent trace"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpanded(open ? null : c.id);
+                            }}
+                          >
+                            ›
+                          </button>
                         </td>
-                        <td className="req-cell">
+                        <td className="c-main">
+                          <span className="ticket-line">
+                            <span className="mono">{c.ticket_id || "—"}</span>
+                            {c.duplicate_flag ? <span className="badge warn">duplicate</span> : null}
+                          </span>
                           <span className="req-text" title={c.raw_message}>
                             {c.raw_message}
                           </span>
-                          {c.requester_phone ? <span className="req-sub mono">{c.requester_phone}</span> : null}
                         </td>
-                        <td>
+                        <td className="c-status">
                           <span className={`badge ${meta.tone}`}>{meta.label}</span>
                         </td>
-                        <td>
+                        <td className="c-cat">
                           <span className="cat-cell">
                             {c.category || "—"}
                             {c.priority ? (
@@ -252,39 +275,28 @@ export default function TicketsPage() {
                             ) : null}
                           </span>
                         </td>
-                        <td className="muted-cell">{c.location || "—"}</td>
-                        <td className="muted-cell">{timeAgo(c.created_at, now)}</td>
-                        <td>
-                          <div className="row-actions">
-                            <button
-                              type="button"
-                              className="icon-btn"
-                              aria-expanded={open}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setExpanded(open ? null : c.id);
-                              }}
-                            >
-                              Trace {open ? "▴" : "▾"}
-                            </button>
-                            <button
-                              type="button"
-                              className="icon-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                downloadCasePdf(c.id, `${c.ticket_id || c.id}.pdf`).catch(() =>
-                                  setError("PDF export failed")
-                                );
-                              }}
-                            >
-                              PDF
-                            </button>
-                          </div>
+                        <td className="c-area">
+                          <span className="area-line">{c.location || "—"}</span>
+                          <span className="req-sub">{timeAgo(c.created_at, now)}</span>
+                        </td>
+                        <td className="c-pdf">
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              downloadCasePdf(c.id, `${c.ticket_id || c.id}.pdf`).catch(() =>
+                                setError("PDF export failed")
+                              );
+                            }}
+                          >
+                            PDF
+                          </button>
                         </td>
                       </tr>
                       {open && (
                         <tr className="trace-row">
-                          <td colSpan={7}>
+                          <td colSpan={6}>
                             <AgentTrace steps={c.agent_trace || []} />
                           </td>
                         </tr>
