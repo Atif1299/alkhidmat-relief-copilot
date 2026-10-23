@@ -7,22 +7,26 @@ Say "working prototype, ready for a pilot". Never say "demo project".
 
 ---
 
-## Part 1 — Business model slide (paste into the deck)
+## Part 1 — Deck changes (in `alkhidmat_relief_copilot_final.pptx`)
 
-**Title:** BUSINESS MODEL
-**Subtitle:** NGOs pay. Requesters never do.
+| Slide | Change |
+|-------|--------|
+| 4 · Architecture | Integrity now reads "Same phone within 48h; critical or high-risk → supervisor" (no CNIC claim). Knowledge reads "Category-filtered SOPs · pgvector + keyword fallback". |
+| 8 · Impact | "~23s — Live average, request to ticket", the production dashboard figure for cases the agents dispatched on their own. |
+| 9 · Cloud | Cloud Run row adds "portable to Alibaba ECS / SAE". The footer no longer overlaps the last row. |
+| 10 · **Business model (new)** | "NGOs Pay, Requesters Never Do": Who pays · How they pay · Why it pays back. Speaker notes below are in the slide notes. |
+| 12 · Close | "Our ask" card: one Alkhidmat district office for a 3-month pilot. |
 
-| Block | Slide text |
+Business model in one line each, if a judge digs in:
+
+| Block | What to say |
 |-------|-----------|
-| **Who pays** | Relief NGOs and their regional offices: food, medical, shelter and blood programmes. |
-| **How they pay** | Yearly subscription per organisation, priced by case volume and number of branches. Plus a one-time setup fee to load the NGO's SOPs and connect its volunteer system or CRM. |
-| **Small NGOs** | Licences funded by donors or company CSR programmes, so a small NGO's budget never decides whether it gets the tool. |
+| **Who pays** | Relief NGOs and their regional offices. Requesters never pay. Small NGOs get licences funded by donors or company CSR. |
+| **How they pay** | Yearly subscription per organisation, priced by case volume and number of branches, plus a one-time setup to load the NGO's SOPs and connect its volunteer roster or CRM. |
 | **Why NGOs pay** | Duplicate claims stop draining stock · desk hours saved on routing · an audit trail for every decision, ready for donor reporting. |
-| **White-label** | Each NGO gets its own branded workspace, categories, SOPs, resources and volunteers. Same agents, same supervisor gate. |
+| **White-label** | Each NGO gets its own workspace, categories, SOPs, resources and volunteers. Same agents, same supervisor gate. |
 
-**Footer line:** *Next step: a free 3-month pilot with one Alkhidmat district office to measure the savings, then price on the results.*
-
-**Speaker notes (about 30 s):**
+**Speaker notes for slide 10 (about 30 s):**
 > "Our customer is the NGO, not the citizen. Requesters never pay. NGOs pay a yearly subscription based on how many cases and branches they run, plus a one-time setup to load their own SOPs and connect their volunteer system. For small NGOs, donors or company CSR can fund the licence. Why they'd pay: fewer duplicate claims eating their stock, less desk time on routing, and an audit trail they can show donors. We want to start with a free pilot at one Alkhidmat district office, measure the savings, and set the price on those numbers."
 
 ---
@@ -34,7 +38,7 @@ Example: "Chest pain, need ambulance, Johar Town." Triage marks it Medical, Crit
 *"We don't send the ambulance. We get the NGO's nearest medical team a checked, prioritised case with a named person on it within a minute."*
 
 **2. "Why make a chest-pain patient wait for a supervisor?"**
-The supervisor step doesn't control emergency care. It controls when the NGO commits its limited resources. Life-threatening cases should go to Rescue 1122 first. In the pilot, critical medical cases show the citizen a "call 1122 now" prompt immediately. *(Not in today's build. Say "in the pilot".)*
+The supervisor step doesn't control emergency care. It controls when the NGO commits its limited resources. Life-threatening cases should go to Rescue 1122 first, and the request page already shows the citizen a "call Rescue 1122 now" prompt (in English and Urdu) the moment a case is marked critical medical, before any approval.
 
 **3. "Can it handle other kinds of aid?"**
 Yes. A new aid type is data, not new code: add the category, an SOP document, and that NGO's resources and volunteers. The agents, Integrity check, supervisor step and dashboard stay the same. We built for six categories (Food, Medical, Shelter, Blood, Education, Other) because those are Alkhidmat's main programmes.
@@ -46,7 +50,7 @@ The app runs in stateless containers on Cloud Run, so more traffic means more co
 The AI (Qwen and embeddings) runs on Alibaba DashScope. The Alibaba ECS free trial wasn't available to us, so we hosted the containers on Cloud Run. They're standard Docker images, so moving to Alibaba ECS or Serverless App Engine is a deploy step, not a rewrite.
 
 **6. "Where exactly is Qwen used?"**
-Intake (reading Urdu or English, pulling out need, location, phone and name), Triage (category and priority), and embeddings for SOP search in the Knowledge step. Integrity, Matcher and Dispatch are deterministic code, on purpose: decisions about money and resources should be rules you can audit.
+Intake (reading Urdu or English, pulling out need, location, phone and name) and Triage (category and priority). The Knowledge step is built for DashScope embeddings with pgvector; on the live site it is currently running on its keyword fallback, because the API key doesn't have embeddings access yet. Integrity, Matcher and Dispatch are deterministic code, on purpose: decisions about money and resources should be rules you can audit.
 
 **7. "What if the AI gets it wrong?"**
 Qwen only picks from fixed categories and priorities, at low temperature. Phone numbers and locations are also pulled out by rules and merged in. Every critical or risky case goes to a human. Every agent step is logged in the trace, so a wrong call is visible and can be corrected.
@@ -69,6 +73,12 @@ CRMs store cases after a person has read and sorted them. We do the reading, sor
 **13. "What do you need next?"**
 One Alkhidmat district office for a 3-month pilot, with real intake, so we can measure time-to-ticket, duplicate claims caught, and desk hours saved.
 
+**14. "Are these Alkhidmat's real SOPs?"**
+No. They are 18 sample SOPs we wrote for the prototype: three per aid line (food, medical, shelter, blood, education) plus duplicate, escalation and Urdu-phrase guides. Each case cites only its own category's SOPs, and Integrity cites the rule that sent a case to a supervisor. In the pilot, Alkhidmat loads its own SOPs and the desk reindexes them automatically.
+
+**15. "What does ~23 seconds measure?"**
+The live dashboard's average from request to ticket for cases the agents dispatched on their own. Cases that wait for a supervisor are counted separately, because that wait is a person's decision, not desk processing.
+
 ---
 
-**Before your slot:** open the live site, submit one request to wake the API, and keep a local copy running in mock mode as a backup.
+**Before your slot:** open the live site and submit one request. The API keeps one instance warm, so it should answer quickly. Leave `AKD-SEED-006` waiting (it powers the "Waiting · medical" demo on /status) and approve a fresh case in front of the judges.
