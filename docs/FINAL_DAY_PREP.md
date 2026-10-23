@@ -81,4 +81,4 @@ The live dashboard's average from request to ticket for cases the agents dispatc
 
 ---
 
-**Before your slot:** open the live site and submit one request. The API keeps one instance warm, so it should answer quickly. Leave `AKD-SEED-006` waiting (it powers the "Waiting · medical" demo on /status) and approve a fresh case in front of the judges.
+**Before your slot:** open the live site and submit one request. The API keeps one instance warm, so it should answer quickly. `AKD-SEED-006` is now dispatched: use the "Waiting · medical" chip on /status to show the end result (clinic and volunteer). For the waiting state, submit a fresh chest-pain request live and approve it in front of the judges. Type a fresh phone number for the food example so it isn't flagged as a duplicate.
