@@ -9,3 +9,10 @@ frontend/.next/
 **/.env
 **/.env.local
 **/__pycache__/
+# Decks, docs and Office lock files are not part of the web build
+~$*
+*.pptx
+*.pdf
+*.zip
+.agents/
+.cursor/
