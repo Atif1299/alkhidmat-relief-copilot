@@ -7,6 +7,7 @@ import { decideCase, getSupervisorQueue, type AgentStep } from "@/lib/api";
 
 type QueueItem = {
   id: string;
+  ticket_id?: string;
   raw_message: string;
   category?: string;
   priority?: string;
@@ -17,18 +18,29 @@ type QueueItem = {
   agent_trace?: AgentStep[];
 };
 
+type Notice = { tone: "ok" | "warn"; text: string };
+
+function readableError(e: unknown, fallback: string): string {
+  const raw = e instanceof Error ? e.message : fallback;
+  if (raw === "Failed to fetch" || raw.includes("NetworkError")) {
+    return "Can't reach the desk API. It may be starting up; the queue retries automatically.";
+  }
+  return raw;
+}
+
 export default function SupervisorPage() {
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [note, setNote] = useState("Verified by supervisor");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
 
   async function load() {
     try {
       setError(null);
       setQueue(await getSupervisorQueue());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Load failed");
+      setError(readableError(e, "Load failed"));
     }
   }
 
@@ -38,13 +50,21 @@ export default function SupervisorPage() {
     return () => clearInterval(t);
   }, []);
 
-  async function onDecide(id: string, decision: "approve" | "reject") {
-    setBusy(id);
+  async function onDecide(item: QueueItem, decision: "approve" | "reject") {
+    setBusy(item.id);
+    setNotice(null);
     try {
-      await decideCase(id, decision, note);
+      const result = await decideCase(item.id, decision, note);
+      const ticket = result.ticket_id || item.ticket_id || "The case";
+      setNotice(
+        decision === "approve"
+          ? { tone: "ok", text: `${ticket} approved and dispatched. ${result.notification ?? ""}`.trim() }
+          : { tone: "warn", text: `${ticket} rejected. The requester sees "Not approved" on the status page.` }
+      );
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Decision failed");
+      setError(readableError(e, "Decision failed"));
+      await load();
     } finally {
       setBusy(null);
     }
@@ -75,6 +95,11 @@ export default function SupervisorPage() {
           Refresh queue
         </button>
       </div>
+      {notice && (
+        <div className={`outcome-banner ${notice.tone}`} role="status" style={{ marginBottom: "0.85rem" }}>
+          <p style={{ margin: 0 }}>{notice.text}</p>
+        </div>
+      )}
       {error && <p className="error">{error}</p>}
       {!queue.length && !error && (
         <div className="panel empty-state">
@@ -99,6 +124,7 @@ export default function SupervisorPage() {
                   </span>
                 ) : null}
                 <div className="muted">
+                  {item.ticket_id ? <span className="mono">{item.ticket_id} · </span> : null}
                   Risk {(item.risk_score ?? 0).toFixed(2)} · {item.location} · {item.requester_phone}
                 </div>
               </div>
@@ -110,7 +136,7 @@ export default function SupervisorPage() {
                   className="btn"
                   type="button"
                   disabled={busy === item.id}
-                  onClick={() => onDecide(item.id, "approve")}
+                  onClick={() => onDecide(item, "approve")}
                 >
                   Approve
                 </button>
@@ -118,7 +144,7 @@ export default function SupervisorPage() {
                   className="btn danger"
                   type="button"
                   disabled={busy === item.id}
-                  onClick={() => onDecide(item.id, "reject")}
+                  onClick={() => onDecide(item, "reject")}
                 >
                   Reject
                 </button>

@@ -1,5 +1,6 @@
 """Supervisor HITL queue and decide API."""
 
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,7 +12,8 @@ from app.db.session import get_db
 from app.deps.auth import RequireSupervisor
 from app.schemas import DecideRequest
 from app.services.audit import log_event
-from app.tools.cases import update_case_fields
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/supervisor", tags=["supervisor"])
 
@@ -34,6 +36,7 @@ def hitl_queue(db: Session = Depends(get_db), _user: RequireSupervisor = ...):
     return [
         {
             "id": c.id,
+            "ticket_id": c.ticket_id,
             "raw_message": c.raw_message,
             "category": c.category,
             "priority": c.priority,
@@ -60,9 +63,14 @@ async def decide(
     if not case:
         raise HTTPException(404, "Case not found")
     if case.status != "pending_hitl":
-        raise HTTPException(400, f"Case is not pending HITL (status={case.status})")
+        raise HTTPException(409, f"Case was already decided (status={case.status})")
 
-    update_case_fields(db, case_id, hitl_decision=body.decision, hitl_note=body.note)
+    # Apply the decision first so a failure leaves the case untouched and pending.
+    try:
+        result = await resume_after_hitl(case_id, body.decision, body.note)
+    except Exception as exc:
+        logger.exception("Supervisor decision failed for case %s", case_id)
+        raise HTTPException(500, "The decision could not be applied. The case is still pending.") from exc
     log_event(
         db,
         case_id=case_id,
@@ -70,7 +78,6 @@ async def decide(
         event_type=body.decision,
         detail=body.note,
     )
-    result = await resume_after_hitl(case_id, body.decision, body.note)
     return {
         "case_id": case_id,
         "decision": body.decision,

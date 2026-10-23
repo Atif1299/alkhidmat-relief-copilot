@@ -462,6 +462,11 @@ input
   letter-spacing: 0.05em;
 }
 
+.actions > .badge
+{
+  align-self: center;
+}
+
 .badge.ok
 {
   background: #d7eee3;

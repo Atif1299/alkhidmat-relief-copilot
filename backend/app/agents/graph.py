@@ -196,11 +196,19 @@ async def resume_after_hitl(
     decision: str,
     note: str | None = None,
 ) -> dict[str, Any]:
+    """Resume a case paused before the supervisor gate.
+
+    The decision is written into the paused checkpoint and the graph continues
+    from hitl_gate: approve → Matcher → Dispatch, reject → end. Passing the
+    decision as new input would restart the run from Intake instead. Cases with
+    no paused checkpoint (seeded demo cases) are decided from the case record.
+    """
     graph = get_graph()
     config = {"configurable": {"thread_id": case_id}}
-    await graph.ainvoke(
-        {"hitl_decision": decision, "hitl_note": note or ""},
-        config=config,
-    )
+    snapshot = await graph.aget_state(config)
+    if not snapshot.next or "hitl_gate" not in snapshot.next:
+        return await nodes.decide_without_checkpoint(case_id, decision, note)
+    await graph.aupdate_state(config, {"hitl_decision": decision, "hitl_note": note or ""})
+    await graph.ainvoke(None, config=config)
     snapshot = await graph.aget_state(config)
     return dict(snapshot.values or {})

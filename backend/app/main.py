@@ -10,10 +10,12 @@ if sys.platform == "win32":
 
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.agents.graph import close_graph, init_graph
 from app.api import auth, cases, chat, metrics, public, supervisor
@@ -21,6 +23,8 @@ from app.config import settings
 from app.db.seed import run_seed
 from app.db.session import init_db
 
+
+logger = logging.getLogger("uvicorn.error")
 
 _DEFAULT_JWT = "dev-change-me-aiddesk-jwt-secret-min-32-chars"
 
@@ -57,6 +61,40 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+class JsonServerErrors:
+    """Turn unhandled errors into a JSON 500 inside the CORS layer.
+
+    Starlette's default 500 is produced outside CORSMiddleware, so the browser
+    sees a missing CORS header and reports "Failed to fetch" instead of the
+    error. Registered before CORS so CORS wraps it.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        started = False
+
+        async def send_tracking(message):
+            nonlocal started
+            if message["type"] == "http.response.start":
+                started = True
+            await send(message)
+
+        try:
+            await self.app(scope, receive, send_tracking)
+        except Exception:
+            if started:
+                raise
+            logger.exception("Unhandled error on %s %s", scope.get("method"), scope.get("path"))
+            response = JSONResponse({"detail": "Internal server error"}, status_code=500)
+            await response(scope, receive, send)
+
+
+app.add_middleware(JsonServerErrors)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,

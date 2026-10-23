@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from app.agents.state import CaseState, dedupe_trace
+from app.db.models import Case
 from app.db.session import SessionLocal
 from app.services import llm as llm_service
 from app.services.audit import log_event
@@ -183,7 +184,8 @@ async def integrity_node(state: CaseState) -> dict[str, Any]:
 
 
 def route_after_integrity(state: CaseState) -> Literal["hitl_gate", "matcher"]:
-    if state.get("requires_hitl") and state.get("hitl_decision") not in ("approve", "reject"):
+    # A flagged case always passes through the gate; the gate applies the decision.
+    if state.get("requires_hitl"):
         return "hitl_gate"
     return "matcher"
 
@@ -266,6 +268,65 @@ async def hitl_gate_node(state: CaseState) -> dict[str, Any]:
         return {"status": "rejected", "agent_trace": [step]}
 
     return await finalize_hitl_pause(state)
+
+
+async def decide_without_checkpoint(case_id: str, decision: str, note: Optional[str]) -> dict[str, Any]:
+    """Apply a supervisor decision to a pending case that has no paused graph.
+
+    Seeded demo cases are written straight to the database, and a checkpoint can
+    be lost (e.g. a different checkpoint store). Rebuild the state from the case
+    record and run the same gate → Matcher → Dispatch steps the graph would.
+    """
+    db = SessionLocal()
+    try:
+        case = db.query(Case).filter(Case.id == case_id).first()
+        if case is None:
+            raise ValueError(f"Case {case_id} not found")
+        pipeline_ms = case.time_to_ticket_ms
+        state: CaseState = {
+            "case_id": case.id,
+            "raw_message": case.raw_message,
+            "language": case.language or "en",
+            "category": case.category or "Other",
+            "priority": case.priority or "medium",
+            "ticket_id": case.ticket_id,
+            "extracted": {
+                "requester_name": case.requester_name,
+                "requester_phone": case.requester_phone,
+                "location": case.location,
+                "need_summary": case.need_summary,
+            },
+            "integrity": {
+                "risk_score": case.risk_score or 0,
+                "duplicate_flag": bool(case.duplicate_flag),
+            },
+            "sop_hits": case.sop_hits or [],
+            "agent_trace": case.agent_trace or [],
+            "hitl_decision": decision,
+            "hitl_note": note or "",
+        }
+    finally:
+        db.close()
+
+    steps = [hitl_gate_node]
+    if decision == "approve":
+        steps += [matcher_node, dispatch_node]
+    for step in steps:
+        out = await step(state)
+        trace = dedupe_trace((state.get("agent_trace") or []) + (out.get("agent_trace") or []))
+        state = {**state, **out, "agent_trace": trace}
+
+    if decision == "approve":
+        # Time-to-ticket measures the original pipeline run, not this decision.
+        db = SessionLocal()
+        try:
+            case = db.query(Case).filter(Case.id == case_id).first()
+            if case is not None:
+                case.time_to_ticket_ms = pipeline_ms
+                db.commit()
+        finally:
+            db.close()
+    return state
 
 
 def route_after_hitl(state: CaseState) -> Literal["matcher", "__end__"]:

@@ -178,7 +178,11 @@ export async function decideCase(caseId: string, decision: "approve" | "reject",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ decision, note }),
   });
-  if (!res.ok) throw new Error("Decision failed");
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    const detail = typeof body?.detail === "string" ? body.detail : `Decision failed (${res.status})`;
+    throw new Error(detail);
+  }
   return res.json();
 }
 

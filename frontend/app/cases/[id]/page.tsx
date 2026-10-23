@@ -33,6 +33,14 @@ type CaseDetail = {
   risk_score?: number;
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  processing: "Received",
+  pending_hitl: "Waiting for supervisor",
+  dispatched: "Dispatched",
+  rejected: "Not approved",
+  closed: "Closed",
+};
+
 export default function CaseDetailPage() {
   const params = useParams();
   const caseId = String(params.id || "");
@@ -114,7 +122,7 @@ export default function CaseDetailPage() {
                     : "neutral"
             }`}
           >
-            {data.status}
+            {STATUS_LABELS[data.status] ?? data.status}
           </span>
           {data.hitl_decision && (
             <p className="muted">
