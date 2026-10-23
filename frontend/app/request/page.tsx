@@ -105,7 +105,7 @@ export default function RequestPage() {
   return (
     <div>
       <header className="page-head">
-        <p className="eyebrow">Public intake · no account</p>
+        <p className="eyebrow l-eyebrow">Public intake · no account</p>
         <h1>Request aid</h1>
         <p className="urdu hero-urdu" lang="ur" style={{ fontSize: "1.05rem", margin: "0 0 0.4rem" }}>
           ضرورت اردو یا انگریزی میں لکھیں
@@ -113,6 +113,11 @@ export default function RequestPage() {
         <p className="muted" style={{ margin: 0 }}>
           Include area and a phone number if you can. The live pipeline shows each agent as it runs.
         </p>
+        <ul className="hero-proof" aria-label="What to expect">
+          <li>Urdu or English</li>
+          <li>A request number in about a minute</li>
+          <li>Check status anytime with that number</li>
+        </ul>
       </header>
 
       <div className="pipeline-wrap panel">

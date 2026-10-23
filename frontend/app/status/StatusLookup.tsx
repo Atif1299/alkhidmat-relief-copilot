@@ -10,6 +10,22 @@ const DEMOS = [
   { label: "Waiting · medical", ticket: "AKD-SEED-006", phone: "03019991111" },
 ];
 
+const STATUS_LABELS: Record<string, string> = {
+  open: "Received",
+  processing: "Received",
+  pending_hitl: "Waiting for supervisor",
+  dispatched: "Dispatched",
+  rejected: "Not approved",
+  closed: "Closed",
+};
+
+const STATUS_LEGEND = [
+  { label: "Received", tone: "neutral", body: "The desk agents are reading and checking your request." },
+  { label: "Waiting for supervisor", tone: "warn", body: "A person is reviewing it before help is assigned." },
+  { label: "Dispatched", tone: "ok", body: "A resource and a volunteer are assigned to you." },
+  { label: "Not approved", tone: "danger", body: "The supervisor could not approve it. Contact the desk." },
+];
+
 function bannerClass(status?: string) {
   if (status === "dispatched" || status === "closed") return "ok";
   if (status === "pending_hitl" || status === "processing") return "warn";
@@ -49,7 +65,7 @@ export function StatusLookup({ initialTicket = "" }: { initialTicket?: string })
   return (
     <div>
       <header className="page-head">
-        <p className="eyebrow">Public track · no account</p>
+        <p className="eyebrow l-eyebrow">Public track · no account</p>
         <h1>Check status</h1>
         <p className="urdu hero-urdu" lang="ur" style={{ fontSize: "1.05rem", margin: "0 0 0.4rem" }}>
           نمبر اور فون سے درخواست چیک کریں
@@ -113,18 +129,31 @@ export function StatusLookup({ initialTicket = "" }: { initialTicket?: string })
         <aside className="panel">
           <h2>Sitrep</h2>
           {!result && !error && (
-            <p className="muted" style={{ margin: 0 }}>
-              Submit a lookup, or use a demo chip. Seed food ticket is{" "}
-              <code className="ticket-stamp" style={{ fontSize: "0.78rem" }}>
-                AKD-SEED-001
-              </code>
-              .
-            </p>
+            <>
+              <p className="muted" style={{ margin: 0 }}>
+                Submit a lookup, or use a demo chip. Seed food ticket is{" "}
+                <code className="ticket-stamp" style={{ fontSize: "0.78rem" }}>
+                  AKD-SEED-001
+                </code>
+                .
+              </p>
+              <p className="compare-label" style={{ margin: "1.2rem 0 0.6rem" }}>
+                What each status means
+              </p>
+              <ul className="status-legend">
+                {STATUS_LEGEND.map((item) => (
+                  <li key={item.label}>
+                    <span className={`badge ${item.tone}`}>{item.label}</span>
+                    <span className="muted">{item.body}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
           {result && (
             <>
               <div className={`outcome-banner ${bannerClass(result.status)}`} role="status">
-                <strong>{result.status === "pending_hitl" ? "Waiting for supervisor" : result.status}</strong>
+                <strong>{STATUS_LABELS[result.status] ?? result.status}</strong>
                 <p>{result.next_action}</p>
                 <code className="ticket-stamp">{result.ticket_id}</code>
                 {result.category && <p className="muted">Category: {result.category}</p>}
