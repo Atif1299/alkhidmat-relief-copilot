@@ -122,126 +122,95 @@ export default function RequestPage() {
   const flagReasons = result?.integrity?.reasons ?? [];
   const lifeThreatening = result?.category === "Medical" && result?.priority === "critical";
 
+  const deskState = busy ? "Running" : result ? statusLabel(result.status) : "Ready";
+  const deskTone = busy
+    ? "neutral"
+    : result?.status === "dispatched"
+      ? "ok"
+      : result?.status === "pending_hitl"
+        ? "warn"
+        : "neutral";
+
   return (
-    <div>
-      <header className="page-head">
-        <p className="eyebrow l-eyebrow">Public intake · no account</p>
-        <h1>Request aid</h1>
-        <p className="urdu hero-urdu" lang="ur" style={{ fontSize: "1.05rem", margin: "0 0 0.4rem" }}>
+    <div className="intake">
+      <header className="intake-head">
+        <div>
+          <p className="eyebrow l-eyebrow">Public intake · no account</p>
+          <h1>Request aid</h1>
+          <p className="muted intake-lede">
+            Write the need in Urdu or English and include your area. A mobile number is required so
+            the desk can reach you.
+          </p>
+        </div>
+        <p className="urdu intake-urdu" lang="ur">
           ضرورت اردو یا انگریزی میں لکھیں
         </p>
-        <p className="muted" style={{ margin: 0 }}>
-          Include your area. A mobile number is required so the desk can reach you. The live
-          pipeline shows each agent as it runs.
-        </p>
-        <ul className="hero-proof" aria-label="What to expect">
-          <li>Urdu or English</li>
-          <li>A request number in about a minute</li>
-          <li>Check status anytime with that number</li>
-        </ul>
       </header>
 
-      <div className="pipeline-wrap panel">
-        <p className="eyebrow" style={{ marginBottom: "0.65rem" }}>
-          Live desk pipeline
-        </p>
-        <PipelineStrip steps={steps} busy={busy} status={result?.status} />
-      </div>
-
-      {lifeThreatening && (
-        <div className="outcome-banner danger" role="alert">
-          <strong>If this is life-threatening, call Rescue 1122 now.</strong>
-          <p className="urdu" lang="ur">
-            اگر جان کو خطرہ ہے تو ابھی ریسکیو 1122 پر کال کریں
-          </p>
-          <p>
-            <a href="tel:1122">Call 1122</a> · Your ticket is below and the desk is reviewing it.
-          </p>
-        </div>
-      )}
-
-      {result && nextStep && (
-        <div
-          className={`outcome-banner ${result.status === "dispatched" ? "ok" : "warn"}`}
-          role="status"
-        >
-          <strong>
-            {result.status === "dispatched" ? "Ticket created" : "Waiting for supervisor"}
-          </strong>
-          <p>{nextStep}</p>
-          {result.status === "dispatched" && resource?.name && (
-            <p>
-              Matched: <strong>{resource.name}</strong>
-              {resource.area ? `, ${resource.area}` : ""}
-              {resource.contact ? ` (${resource.contact})` : ""}
-            </p>
-          )}
-          {result.status === "dispatched" && volunteerName && (
-            <p>
-              Volunteer: <strong>{volunteerName}</strong>
-            </p>
-          )}
-          {result.status === "pending_hitl" && flagReasons.length > 0 && (
-            <p>Flagged: {flagReasons.join(" · ")}</p>
-          )}
-          {result.ticket_id && <code className="ticket-stamp">{result.ticket_id}</code>}
-          {result.ticket_id && (
-            <p>
-              <Link href={`/status?ticket=${encodeURIComponent(result.ticket_id)}`}>
-                Check status anytime →
-              </Link>
-            </p>
-          )}
-        </div>
-      )}
-
-      <div className="grid-2" style={{ marginTop: "1rem" }}>
-        <section className="panel">
-          <h2>Your request</h2>
-          <div className="chips">
-            {SAMPLES.map((s) => (
-              <button
-                key={s.label}
-                type="button"
-                className={message === s.text ? "chip active" : "chip"}
-                onClick={() => {
-                  setMessage(s.text);
-                  setPhone(s.phone);
-                  setPhoneError(null);
-                }}
-              >
-                {s.label}
-              </button>
-            ))}
+      <div className="intake-grid">
+        <section className="panel intake-form" aria-labelledby="request-heading">
+          <div className="intake-form-head">
+            <h2 id="request-heading">Your request</h2>
+            <div className="chips" aria-label="Sample requests">
+              {SAMPLES.map((s) => (
+                <button
+                  key={s.label}
+                  type="button"
+                  className={message === s.text ? "chip active" : "chip"}
+                  onClick={() => {
+                    setMessage(s.text);
+                    setPhone(s.phone);
+                    setPhoneError(null);
+                  }}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
           </div>
           <label className="sr-only" htmlFor="aid-message">
             Aid request message
           </label>
           <textarea
             id="aid-message"
-            rows={6}
+            rows={5}
             value={message}
+            placeholder="e.g. Flood ke baad khane ki zaroorat hai, Township Lahore, family of 5."
             onChange={(e) => setMessage(e.target.value)}
           />
-          <label className="field-label" htmlFor="aid-phone">
-            Mobile number <span className="field-req">required</span>
-            <span className="muted field-hint">Yours or a family member's · used to check your request later</span>
-          </label>
-          <input
-            id="aid-phone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            placeholder="0300 1234567"
-            value={phone}
-            aria-invalid={phoneError ? true : undefined}
-            aria-describedby={phoneError ? "aid-phone-error" : undefined}
-            className={phoneError ? "input-invalid" : undefined}
-            onChange={(e) => {
-              setPhone(e.target.value);
-              if (phoneError) setPhoneError(null);
-            }}
-          />
+          <div className="phone-row">
+            <div>
+              <label className="field-label" htmlFor="aid-phone">
+                Mobile number <span className="field-req">required</span>
+              </label>
+              <input
+                id="aid-phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="0300 1234567"
+                value={phone}
+                aria-invalid={phoneError ? true : undefined}
+                aria-describedby={phoneError ? "aid-phone-error" : "aid-phone-hint"}
+                className={phoneError ? "input-invalid" : undefined}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  if (phoneError) setPhoneError(null);
+                }}
+              />
+            </div>
+            <button
+              className="btn btn-lg submit-btn"
+              type="button"
+              disabled={busy || !message.trim()}
+              onClick={submit}
+            >
+              {busy ? "Processing…" : "Submit request"}
+            </button>
+          </div>
+          <p id="aid-phone-hint" className="muted field-hint">
+            Yours or a family member&apos;s. You&apos;ll use it with your request number to check status.
+          </p>
           {phoneError && (
             <div id="aid-phone-error" className="field-error" role="alert">
               <p>{phoneError}</p>
@@ -252,46 +221,96 @@ export default function RequestPage() {
               )}
             </div>
           )}
-          <div className="actions" style={{ marginTop: "0.75rem" }}>
-            <button
-              className="btn"
-              type="button"
-              disabled={busy || !message.trim()}
-              onClick={submit}
-            >
-              {busy ? "Processing…" : "Submit request"}
-            </button>
-          </div>
           {error && <p className="error">{error}</p>}
-          {result && (
-            <div style={{ marginTop: "1rem" }}>
-              <span
-                className={`badge ${
-                  result.status === "dispatched"
-                    ? "ok"
-                    : result.status === "pending_hitl"
-                      ? "warn"
-                      : "neutral"
-                }`}
-              >
-                {statusLabel(result.status)}
-              </span>
-              {result.notification && <p>{result.notification}</p>}
-              <h3 style={{ marginTop: "1rem" }}>Guidance used</h3>
-              <SopCitations hits={result.sop_hits} variant="titles" />
-            </div>
-          )}
+          <p className="muted intake-foot">
+            Staff? <Link href="/login">Sign in to the ops desk</Link>
+          </p>
         </section>
 
-        <aside className="panel">
-          <h2>Agent trace</h2>
-          <AgentTrace steps={steps} />
+        <aside className="panel intake-desk" aria-label="Live desk">
+          <div className="desk-head">
+            <p className="eyebrow">Live desk pipeline</p>
+            <span className={`badge ${deskTone}`}>{deskState}</span>
+          </div>
+          <PipelineStrip steps={steps} busy={busy} status={result?.status} />
+
+          {lifeThreatening && (
+            <div className="outcome-banner danger" role="alert">
+              <strong>If this is life-threatening, call Rescue 1122 now.</strong>
+              <p className="urdu" lang="ur">
+                اگر جان کو خطرہ ہے تو ابھی ریسکیو 1122 پر کال کریں
+              </p>
+              <p>
+                <a href="tel:1122">Call 1122</a> · Your ticket is below and the desk is reviewing it.
+              </p>
+            </div>
+          )}
+
+          {result && nextStep && (
+            <div
+              className={`outcome-banner ${result.status === "dispatched" ? "ok" : "warn"}`}
+              role="status"
+            >
+              <strong>
+                {result.status === "dispatched" ? "Ticket created" : "Waiting for supervisor"}
+              </strong>
+              <p>{nextStep}</p>
+              {result.status === "dispatched" && resource?.name && (
+                <p>
+                  Matched: <strong>{resource.name}</strong>
+                  {resource.area ? `, ${resource.area}` : ""}
+                  {resource.contact ? ` (${resource.contact})` : ""}
+                </p>
+              )}
+              {result.status === "dispatched" && volunteerName && (
+                <p>
+                  Volunteer: <strong>{volunteerName}</strong>
+                </p>
+              )}
+              {result.status === "pending_hitl" && flagReasons.length > 0 && (
+                <p>Flagged: {flagReasons.join(" · ")}</p>
+              )}
+              {result.ticket_id && <code className="ticket-stamp">{result.ticket_id}</code>}
+              {result.ticket_id && (
+                <p>
+                  <Link href={`/status?ticket=${encodeURIComponent(result.ticket_id)}`}>
+                    Check status anytime →
+                  </Link>
+                </p>
+              )}
+            </div>
+          )}
+
+          {steps.length === 0 && !busy ? (
+            <ol className="desk-next" aria-label="What happens next">
+              <li>
+                <strong>Agents read and check it</strong>
+                <span>Category, priority, the right SOP, and a duplicate check.</span>
+              </li>
+              <li>
+                <strong>You get a request number</strong>
+                <span>An AKD number in about a minute, or a supervisor review for urgent cases.</span>
+              </li>
+              <li>
+                <strong>Track it anytime</strong>
+                <span>Use the number and your mobile on Check status. No account needed.</span>
+              </li>
+            </ol>
+          ) : (
+            <div className="desk-trace">
+              <h3>Agent trace</h3>
+              <AgentTrace steps={steps} />
+            </div>
+          )}
+
+          {result?.sop_hits?.length ? (
+            <div className="desk-trace">
+              <h3>Guidance used</h3>
+              <SopCitations hits={result.sop_hits} variant="titles" />
+            </div>
+          ) : null}
         </aside>
       </div>
-
-      <p className="muted" style={{ marginTop: "1.5rem" }}>
-        Staff? <Link href="/login">Sign in to the ops desk</Link>
-      </p>
     </div>
   );
 }
