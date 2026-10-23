@@ -1,0 +1,74 @@
+# National Final Prep — 24 Oct 2026, Islamabad
+
+Project P00627 · Muhammad Atif · Abdul Ahad
+
+**Order to present:** one medical case and its end result → how the agents get there → business model → the pilot ask.
+Say "working prototype, ready for a pilot". Never say "demo project".
+
+---
+
+## Part 1 — Business model slide (paste into the deck)
+
+**Title:** BUSINESS MODEL
+**Subtitle:** NGOs pay. Requesters never do.
+
+| Block | Slide text |
+|-------|-----------|
+| **Who pays** | Relief NGOs and their regional offices: food, medical, shelter and blood programmes. |
+| **How they pay** | Yearly subscription per organisation, priced by case volume and number of branches. Plus a one-time setup fee to load the NGO's SOPs and connect its volunteer system or CRM. |
+| **Small NGOs** | Licences funded by donors or company CSR programmes, so a small NGO's budget never decides whether it gets the tool. |
+| **Why NGOs pay** | Duplicate claims stop draining stock · desk hours saved on routing · an audit trail for every decision, ready for donor reporting. |
+| **White-label** | Each NGO gets its own branded workspace, categories, SOPs, resources and volunteers. Same agents, same supervisor gate. |
+
+**Footer line:** *Next step: a free 3-month pilot with one Alkhidmat district office to measure the savings, then price on the results.*
+
+**Speaker notes (about 30 s):**
+> "Our customer is the NGO, not the citizen. Requesters never pay. NGOs pay a yearly subscription based on how many cases and branches they run, plus a one-time setup to load their own SOPs and connect their volunteer system. For small NGOs, donors or company CSR can fund the licence. Why they'd pay: fewer duplicate claims eating their stock, less desk time on routing, and an audit trail they can show donors. We want to start with a free pilot at one Alkhidmat district office, measure the savings, and set the price on those numbers."
+
+---
+
+## Part 2 — Judge Q&A (short answers, say them in your own words)
+
+**1. "Take a medical case. What's the end result?"**
+Example: "Chest pain, need ambulance, Johar Town." Triage marks it Medical, Critical, and the citizen gets an AKD ticket number immediately. Integrity sends it to a supervisor, who approves with one click. The Matcher assigns the Alkhidmat Mobile Clinic in Johar Town and the volunteer Fatima Ali (medical, same area). The citizen sees "dispatched" with the clinic and volunteer names on /status. The desk gets the full timeline and a PDF.
+*"We don't send the ambulance. We get the NGO's nearest medical team a checked, prioritised case with a named person on it within a minute."*
+
+**2. "Why make a chest-pain patient wait for a supervisor?"**
+The supervisor step doesn't control emergency care. It controls when the NGO commits its limited resources. Life-threatening cases should go to Rescue 1122 first. In the pilot, critical medical cases show the citizen a "call 1122 now" prompt immediately. *(Not in today's build. Say "in the pilot".)*
+
+**3. "Can it handle other kinds of aid?"**
+Yes. A new aid type is data, not new code: add the category, an SOP document, and that NGO's resources and volunteers. The agents, Integrity check, supervisor step and dashboard stay the same. We built for six categories (Food, Medical, Shelter, Blood, Education, Other) because those are Alkhidmat's main programmes.
+
+**4. "How does it scale?"**
+The app runs in stateless containers on Cloud Run, so more traffic means more containers. Cases, approvals and the agents' saved progress live in Postgres. Each NGO is a separate workspace. A paused case survives a server restart because the pipeline's state is saved.
+
+**5. "Why Google Cloud at an Alibaba hackathon?"**
+The AI (Qwen and embeddings) runs on Alibaba DashScope. The Alibaba ECS free trial wasn't available to us, so we hosted the containers on Cloud Run. They're standard Docker images, so moving to Alibaba ECS or Serverless App Engine is a deploy step, not a rewrite.
+
+**6. "Where exactly is Qwen used?"**
+Intake (reading Urdu or English, pulling out need, location, phone and name), Triage (category and priority), and embeddings for SOP search in the Knowledge step. Integrity, Matcher and Dispatch are deterministic code, on purpose: decisions about money and resources should be rules you can audit.
+
+**7. "What if the AI gets it wrong?"**
+Qwen only picks from fixed categories and priorities, at low temperature. Phone numbers and locations are also pulled out by rules and merged in. Every critical or risky case goes to a human. Every agent step is logged in the trace, so a wrong call is visible and can be corrected.
+
+**8. "How do you catch fraud and duplicates?"**
+Today: the same phone number within 48 hours goes to a supervisor, along with every critical case. Missing phone raises the risk score. Next: CNIC and household matching once an NGO connects its beneficiary records. *(Don't claim a CNIC check. There isn't one yet.)*
+
+**9. "Why many agents instead of one prompt?"**
+Each step has one job, its own log, and can be tested on its own. The Integrity check can't be skipped, because it's part of the graph's structure, not a prompt instruction. The graph can pause for a human and resume later from where it stopped. One big prompt can't guarantee any of that.
+
+**10. "What about citizens' privacy?"**
+Citizens don't need an account. Checking status needs the ticket number plus the same phone number, and a wrong pair gets a generic "not found". The citizen view never shows risk scores, the agent trace, supervisor notes or volunteer phone numbers. Staff pages need a login with a role (desk or supervisor).
+
+**11. "Is this real data? What's live and what's not?"**
+The app, agents, supervisor step, status page and dashboard are live on the public URL. The Lahore resources and volunteers are sample data we created. SMS/WhatsApp notifications are not connected yet: the citizen checks /status instead. Real inventory and CRM connections come with the pilot.
+
+**12. "Who's the competition? Why not a CRM?"**
+CRMs store cases after a person has read and sorted them. We do the reading, sorting, checking and matching before a case reaches the CRM, in Urdu and English, and we can push the result into the NGO's existing CRM.
+
+**13. "What do you need next?"**
+One Alkhidmat district office for a 3-month pilot, with real intake, so we can measure time-to-ticket, duplicate claims caught, and desk hours saved.
+
+---
+
+**Before your slot:** open the live site, submit one request to wake the API, and keep a local copy running in mock mode as a backup.

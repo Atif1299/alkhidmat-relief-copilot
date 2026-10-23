@@ -1225,6 +1225,19 @@ a.chip
   border-left: 4px solid var(--accent-2);
 }
 
+.outcome-banner.danger
+{
+  background: #fef2f2;
+  border-color: #fecaca;
+  border-left: 4px solid var(--danger);
+}
+
+.outcome-banner.danger a
+{
+  color: var(--danger);
+  font-weight: 600;
+}
+
 .outcome-banner p
 {
   margin: 0.35rem 0 0;

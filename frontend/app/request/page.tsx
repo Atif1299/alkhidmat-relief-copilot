@@ -22,6 +22,20 @@ const SAMPLES = [
   },
 ];
 
+const STATUS_LABELS: Record<string, string> = {
+  dispatched: "Dispatched",
+  pending_hitl: "Waiting for supervisor",
+  processing: "Processing",
+  rejected: "Not approved",
+  closed: "Closed",
+};
+
+type MatchedResource = { name?: string; area?: string; contact?: string };
+
+function statusLabel(status?: string) {
+  return (status && STATUS_LABELS[status]) || status || "";
+}
+
 export default function RequestPage() {
   const [message, setMessage] = useState(SAMPLES[0].text);
   const [steps, setSteps] = useState<AgentStep[]>([]);
@@ -83,6 +97,10 @@ export default function RequestPage() {
           ? `Your request number is ${ticket}. Waiting for supervisor. Check status anytime.`
           : "Your request is waiting for supervisor review."
         : null;
+  const resource = (result?.matched_resources?.[0] as MatchedResource | undefined) ?? null;
+  const volunteerName = result?.volunteer?.name;
+  const flagReasons = result?.integrity?.reasons ?? [];
+  const lifeThreatening = result?.category === "Medical" && result?.priority === "critical";
 
   return (
     <div>
@@ -104,6 +122,18 @@ export default function RequestPage() {
         <PipelineStrip steps={steps} busy={busy} status={result?.status} />
       </div>
 
+      {lifeThreatening && (
+        <div className="outcome-banner danger" role="alert">
+          <strong>If this is life-threatening, call Rescue 1122 now.</strong>
+          <p className="urdu" lang="ur">
+            اگر جان کو خطرہ ہے تو ابھی ریسکیو 1122 پر کال کریں
+          </p>
+          <p>
+            <a href="tel:1122">Call 1122</a> · Your ticket is below and the desk is reviewing it.
+          </p>
+        </div>
+      )}
+
       {result && nextStep && (
         <div
           className={`outcome-banner ${result.status === "dispatched" ? "ok" : "warn"}`}
@@ -113,6 +143,21 @@ export default function RequestPage() {
             {result.status === "dispatched" ? "Ticket created" : "Waiting for supervisor"}
           </strong>
           <p>{nextStep}</p>
+          {result.status === "dispatched" && resource?.name && (
+            <p>
+              Matched: <strong>{resource.name}</strong>
+              {resource.area ? `, ${resource.area}` : ""}
+              {resource.contact ? ` (${resource.contact})` : ""}
+            </p>
+          )}
+          {result.status === "dispatched" && volunteerName && (
+            <p>
+              Volunteer: <strong>{volunteerName}</strong>
+            </p>
+          )}
+          {result.status === "pending_hitl" && flagReasons.length > 0 && (
+            <p>Flagged: {flagReasons.join(" · ")}</p>
+          )}
           {result.ticket_id && <code className="ticket-stamp">{result.ticket_id}</code>}
           {result.ticket_id && (
             <p>
@@ -170,7 +215,7 @@ export default function RequestPage() {
                       : "neutral"
                 }`}
               >
-                {result.status}
+                {statusLabel(result.status)}
               </span>
               {result.notification && <p>{result.notification}</p>}
               <h3 style={{ marginTop: "1rem" }}>SOP citations</h3>
