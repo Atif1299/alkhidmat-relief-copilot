@@ -116,5 +116,49 @@ def test_second_decision_is_refused(client, auth_headers):
     assert case["status"] == "rejected"
 
 
+def test_time_to_ticket_excludes_supervisor_wait(client, auth_headers):
+    data = _critical_case(client, auth_headers)
+    paused = client.get(f"/api/v1/cases/{data['case_id']}", headers=auth_headers).json()
+    assert paused["time_to_ticket_ms"] is not None
+
+    # Approval must keep the pipeline time recorded at the pause, not add the wait.
+    assert _decide(client, auth_headers, data["case_id"], "approve").status_code == 200
+    approved = client.get(f"/api/v1/cases/{data['case_id']}", headers=auth_headers).json()
+    assert approved["status"] == "dispatched"
+    assert approved["time_to_ticket_ms"] == paused["time_to_ticket_ms"]
+
+
+def test_metrics_average_counts_only_auto_dispatched(client, auth_headers):
+    case_id = str(uuid.uuid4())
+    db = SessionLocal()
+    try:
+        # A supervisor-reviewed case with a huge stored time must not move the average.
+        db.add(
+            Case(
+                id=case_id,
+                ticket_id=f"AKD-TEST-{uuid.uuid4().hex[:6].upper()}",
+                raw_message="Old approved case",
+                category="Medical",
+                priority="critical",
+                status="dispatched",
+                hitl_decision="approve",
+                time_to_ticket_ms=10**10,
+                created_at=datetime.utcnow(),
+            )
+        )
+        db.commit()
+        auto = [
+            c.time_to_ticket_ms
+            for c in db.query(Case).all()
+            if c.time_to_ticket_ms is not None and c.status == "dispatched" and not c.hitl_decision
+        ]
+    finally:
+        db.close()
+    metrics = client.get("/api/v1/metrics", headers=auth_headers).json()
+    expected = int(sum(auto) / len(auto)) if auto else 0
+    assert metrics["avg_time_to_ticket_ms"] == expected
+    assert metrics["avg_time_to_ticket_ms"] < 10**10
+
+
 def test_unknown_case_is_404(client, auth_headers):
     assert _decide(client, auth_headers, str(uuid.uuid4()), "approve").status_code == 404

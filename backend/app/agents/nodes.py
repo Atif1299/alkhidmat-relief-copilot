@@ -209,6 +209,8 @@ async def finalize_hitl_pause(state: CaseState) -> dict[str, Any]:
         "requires_hitl": True,
         "agent_trace": full_trace,
         "sop_hits": state.get("sop_hits") or [],
+        # Pipeline time stops at the pause; supervisor wait is not desk processing.
+        "time_to_ticket_ms": _now_ms() - (state.get("started_at_ms") or _now_ms()),
     }
     db = SessionLocal()
     try:
@@ -282,7 +284,6 @@ async def decide_without_checkpoint(case_id: str, decision: str, note: Optional[
         case = db.query(Case).filter(Case.id == case_id).first()
         if case is None:
             raise ValueError(f"Case {case_id} not found")
-        pipeline_ms = case.time_to_ticket_ms
         state: CaseState = {
             "case_id": case.id,
             "raw_message": case.raw_message,
@@ -315,17 +316,6 @@ async def decide_without_checkpoint(case_id: str, decision: str, note: Optional[
         out = await step(state)
         trace = dedupe_trace((state.get("agent_trace") or []) + (out.get("agent_trace") or []))
         state = {**state, **out, "agent_trace": trace}
-
-    if decision == "approve":
-        # Time-to-ticket measures the original pipeline run, not this decision.
-        db = SessionLocal()
-        try:
-            case = db.query(Case).filter(Case.id == case_id).first()
-            if case is not None:
-                case.time_to_ticket_ms = pipeline_ms
-                db.commit()
-        finally:
-            db.close()
     return state
 
 
@@ -408,7 +398,9 @@ async def dispatch_node(state: CaseState) -> dict[str, Any]:
             "matched_resource_id": matched[0]["id"] if matched else None,
             "volunteer_id": volunteer["id"] if volunteer else None,
             "sop_hits": state.get("sop_hits") or [],
-            "time_to_ticket_ms": elapsed,
+            # After a supervisor decision, keep the time recorded at the pause
+            # (None is skipped by update_case_fields).
+            "time_to_ticket_ms": None if state.get("hitl_decision") else elapsed,
         }
 
         existing = case_tools.update_case_fields(db, state["case_id"])

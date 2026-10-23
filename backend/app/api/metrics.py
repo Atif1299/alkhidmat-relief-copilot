@@ -18,7 +18,13 @@ def metrics(db: Session = Depends(get_db), _user: RequireDesk = ...):
     today = datetime.utcnow().date()
     cases = db.query(Case).all()
     cases_today = [c for c in cases if c.created_at and c.created_at.date() == today]
-    with_ticket = [c for c in cases if c.time_to_ticket_ms is not None]
+    # Desk speed: cases the agents dispatched on their own. Supervisor-reviewed
+    # cases are left out because older ones stored time spent waiting for a human.
+    with_ticket = [
+        c
+        for c in cases
+        if c.time_to_ticket_ms is not None and c.status == "dispatched" and not c.hitl_decision
+    ]
     avg_ms = (
         int(sum(c.time_to_ticket_ms for c in with_ticket) / len(with_ticket))
         if with_ticket
