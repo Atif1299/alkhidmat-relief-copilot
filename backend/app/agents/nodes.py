@@ -27,6 +27,8 @@ async def intake_node(state: CaseState) -> dict[str, Any]:
     message = state["raw_message"]
     case_id = state.get("case_id") or str(uuid.uuid4())
     extracted = await llm_service.extract_with_llm(message)
+    if state.get("phone_hint"):
+        extracted["requester_phone"] = state["phone_hint"]
     language = extracted.get("language") or "en"
     db = SessionLocal()
     try:

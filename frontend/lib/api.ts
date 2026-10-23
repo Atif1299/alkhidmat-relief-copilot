@@ -95,6 +95,16 @@ export async function chatSync(message: string): Promise<ChatResult> {
   return res.json();
 }
 
+/** The API refused the request with a reason the requester can act on. */
+export class ChatRejected extends Error {}
+
+/** First Pakistani mobile in `text`, as 03XXXXXXXXX (mirrors the API rule). */
+export function findMobile(text: string): string | null {
+  const compact = text.replace(/[\s\-().]/g, "");
+  const match = compact.match(/(?:\+92|0092|92|0)(3\d{9})(?!\d)/);
+  return match ? `0${match[1]}` : null;
+}
+
 const CHAT_STREAM_HEADERS = {
   "Content-Type": "application/json",
   Accept: "text/event-stream",
@@ -104,13 +114,14 @@ const CHAT_STREAM_HEADERS = {
 export async function chatStream(
   message: string,
   onEvent: (event: string, data: unknown) => void,
-  options?: { anonymous?: boolean }
+  options?: { anonymous?: boolean; phone?: string }
 ): Promise<ChatResult | null> {
   const skipAuth = options?.anonymous === true;
+  const payload = JSON.stringify({ message, phone: options?.phone || undefined });
   let res = await fetch(`${API_URL}/api/v1/chat`, {
     method: "POST",
     headers: skipAuth ? CHAT_STREAM_HEADERS : authHeaders(CHAT_STREAM_HEADERS),
-    body: JSON.stringify({ message }),
+    body: payload,
   });
   // Public intake allows guests. A leftover / expired staff token must not block it.
   if (res.status === 401 && getToken()) {
@@ -118,8 +129,13 @@ export async function chatStream(
     res = await fetch(`${API_URL}/api/v1/chat`, {
       method: "POST",
       headers: CHAT_STREAM_HEADERS,
-      body: JSON.stringify({ message }),
+      body: payload,
     });
+  }
+  if (res.status === 422) {
+    // Readable reason from the API (e.g. a missing mobile number).
+    const body = await res.json().catch(() => null);
+    if (typeof body?.detail === "string") throw new ChatRejected(body.detail);
   }
   if (!res.ok || !res.body) throw new Error(`Chat stream failed: ${res.status}`);
 

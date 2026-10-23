@@ -17,7 +17,7 @@ def test_health(client):
 
 def test_anonymous_chat_allowed(client):
     """Public /request path — no JWT required for intake."""
-    phone = f"0301{uuid.uuid4().hex[:7]}"
+    phone = f"0301{str(uuid.uuid4().int)[:7]}"
     r = client.post(
         "/api/v1/chat/sync",
         json={
@@ -57,7 +57,7 @@ def test_login_seeded_users(client):
 
 def test_keyword_rag_retrieval_mode(client, auth_headers):
     """Without DashScope key, Knowledge uses keyword fallback."""
-    phone = f"0301{uuid.uuid4().hex[:7]}"
+    phone = f"0301{str(uuid.uuid4().int)[:7]}"
     r = client.post(
         "/api/v1/chat/sync",
         headers=auth_headers,
@@ -72,7 +72,7 @@ def test_keyword_rag_retrieval_mode(client, auth_headers):
 
 
 def test_citizen_cannot_decide(client, citizen_headers, auth_headers):
-    phone = f"0301{uuid.uuid4().hex[:7]}"
+    phone = f"0301{str(uuid.uuid4().int)[:7]}"
     r = client.post(
         "/api/v1/chat/sync",
         headers=citizen_headers,
@@ -89,7 +89,7 @@ def test_citizen_cannot_decide(client, citizen_headers, auth_headers):
 
 
 def test_happy_path_food(client, auth_headers):
-    phone = f"0301{uuid.uuid4().hex[:7]}"
+    phone = f"0301{str(uuid.uuid4().int)[:7]}"
     r = client.post(
         "/api/v1/chat/sync",
         headers=auth_headers,
@@ -126,7 +126,7 @@ def test_duplicate_phone_escalates(client, auth_headers):
 
 
 def test_critical_hitl_then_approve(client, auth_headers):
-    phone = f"0301{uuid.uuid4().hex[:7]}"
+    phone = f"0301{str(uuid.uuid4().int)[:7]}"
     r = client.post(
         "/api/v1/chat/sync",
         headers=auth_headers,
@@ -169,7 +169,7 @@ def test_metrics(client, desk_headers):
 
 
 def test_timeline_and_pdf(client, auth_headers, desk_headers):
-    phone = f"0301{uuid.uuid4().hex[:7]}"
+    phone = f"0301{str(uuid.uuid4().int)[:7]}"
     created = client.post(
         "/api/v1/chat/sync",
         headers=auth_headers,

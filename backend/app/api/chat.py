@@ -6,23 +6,33 @@ import asyncio
 import json
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sse_starlette.sse import EventSourceResponse
 
 from app.agents.graph import run_pipeline, stream_pipeline
 from app.deps.auth import OptionalChatUser
 from app.schemas import ChatRequest
+from app.services.phone import message_with_phone
 
 router = APIRouter(prefix="/api/v1", tags=["chat"])
+
+
+def _intake(body: ChatRequest) -> tuple[str, str]:
+    """A request needs a reachable mobile before the agents run."""
+    try:
+        return message_with_phone(body.message, body.phone)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
 
 
 @router.post("/chat")
 async def chat(body: ChatRequest, _user: OptionalChatUser):
     case_id = body.case_id or str(uuid.uuid4())
+    message, phone = _intake(body)
 
     async def event_gen():
         result: dict = {}
-        async for kind, payload in stream_pipeline(body.message, case_id=case_id):
+        async for kind, payload in stream_pipeline(message, case_id=case_id, phone=phone):
             if kind == "agent_step":
                 yield {"event": "agent_step", "data": json.dumps(payload, ensure_ascii=False)}
                 await asyncio.sleep(0.45)
@@ -83,7 +93,8 @@ async def chat(body: ChatRequest, _user: OptionalChatUser):
 @router.post("/chat/sync")
 async def chat_sync(body: ChatRequest, _user: OptionalChatUser):
     case_id = body.case_id or str(uuid.uuid4())
-    result = await run_pipeline(body.message, case_id=case_id)
+    message, phone = _intake(body)
+    result = await run_pipeline(message, case_id=case_id, phone=phone)
     return {
         "case_id": result.get("case_id"),
         "ticket_id": result.get("ticket_id"),

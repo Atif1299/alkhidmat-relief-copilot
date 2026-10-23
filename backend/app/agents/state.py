@@ -31,6 +31,8 @@ def merge_trace(left: list, right: list) -> list:
 class CaseState(TypedDict, total=False):
     case_id: str
     raw_message: str
+    # Mobile resolved by the API before the run; wins over what Intake extracts.
+    phone_hint: Optional[str]
     language: str
     extracted: dict[str, Any]
     category: str

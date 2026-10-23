@@ -11,6 +11,8 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     case_id: Optional[str] = None
+    # Requester mobile; optional when the message already contains one.
+    phone: Optional[str] = Field(default=None, max_length=32)
 
     @field_validator("message")
     @classmethod

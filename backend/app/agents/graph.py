@@ -124,7 +124,9 @@ def get_graph():
     return _graph
 
 
-async def run_pipeline(message: str, case_id: str | None = None) -> dict[str, Any]:
+async def run_pipeline(
+    message: str, case_id: str | None = None, phone: str | None = None
+) -> dict[str, Any]:
     graph = get_graph()
     cid = case_id or str(uuid.uuid4())
     config = {"configurable": {"thread_id": cid}}
@@ -133,6 +135,7 @@ async def run_pipeline(message: str, case_id: str | None = None) -> dict[str, An
         "raw_message": message,
         "agent_trace": [],
         "started_at_ms": int(time.time() * 1000),
+        "phone_hint": phone,
     }
     await graph.ainvoke(initial, config=config)
     snapshot = await graph.aget_state(config)
@@ -153,7 +156,7 @@ async def run_pipeline(message: str, case_id: str | None = None) -> dict[str, An
 
 
 async def stream_pipeline(
-    message: str, case_id: str | None = None
+    message: str, case_id: str | None = None, phone: str | None = None
 ) -> AsyncIterator[tuple[str, Any]]:
     """Yield agent_step events as each graph node finishes, then a final state dict."""
     graph = get_graph()
@@ -164,6 +167,7 @@ async def stream_pipeline(
         "raw_message": message,
         "agent_trace": [],
         "started_at_ms": int(time.time() * 1000),
+        "phone_hint": phone,
     }
     async for update in graph.astream(initial, config=config, stream_mode="updates"):
         if not isinstance(update, dict):

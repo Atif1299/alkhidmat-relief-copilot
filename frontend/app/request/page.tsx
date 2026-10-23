@@ -5,22 +5,29 @@ import Link from "next/link";
 import { AgentTrace } from "@/components/AgentTrace";
 import { PipelineStrip } from "@/components/PipelineStrip";
 import { SopCitations } from "@/components/SopCitations";
-import { chatStream, type AgentStep, type ChatResult } from "@/lib/api";
+import { ChatRejected, chatStream, findMobile, type AgentStep, type ChatResult } from "@/lib/api";
 
 const SAMPLES = [
   {
     label: "Urdu · Food",
-    text: "Flood ke baad khane ki zaroorat hai, Township Lahore, family of 5. Phone 03017654321",
+    text: "Flood ke baad khane ki zaroorat hai, Township Lahore, family of 5.",
+    phone: "03017654321",
   },
   {
     label: "EN · Duplicate",
-    text: "Need food packs again for my family in Township Lahore. Phone 03001234567",
+    text: "Need food packs again for my family in Township Lahore.",
+    phone: "03001234567",
   },
   {
     label: "Critical · Medical",
-    text: "Chest pain, need ambulance, Johar Town. Phone 03018887766",
+    text: "Chest pain, need ambulance, Johar Town.",
+    phone: "03018887766",
   },
 ];
+
+const PHONE_REQUIRED = "Add a mobile number (yours or a family member's) so the desk can reach you and you can check your request later.";
+const PHONE_REQUIRED_UR = "براہ کرم موبائل نمبر شامل کریں تاکہ ہم آپ سے رابطہ کر سکیں";
+const PHONE_INVALID = "Enter a Pakistani mobile number like 0300 1234567.";
 
 const STATUS_LABELS: Record<string, string> = {
   dispatched: "Dispatched",
@@ -38,12 +45,23 @@ function statusLabel(status?: string) {
 
 export default function RequestPage() {
   const [message, setMessage] = useState(SAMPLES[0].text);
+  const [phone, setPhone] = useState(SAMPLES[0].phone);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [steps, setSteps] = useState<AgentStep[]>([]);
   const [result, setResult] = useState<ChatResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
+    // A reachable mobile is required: the desk calls back and /status needs it.
+    const typed = phone.trim();
+    const resolved = typed ? findMobile(typed) : findMobile(message);
+    if (!resolved) {
+      setPhoneError(typed ? PHONE_INVALID : PHONE_REQUIRED);
+      document.getElementById("aid-phone")?.focus();
+      return;
+    }
+    setPhoneError(null);
     setBusy(true);
     setError(null);
     setSteps([]);
@@ -69,12 +87,14 @@ export default function RequestPage() {
             }
           }
         },
-        { anonymous: true }
+        { anonymous: true, phone: typed || undefined }
       );
       if (done) setResult(done);
     } catch (e) {
       const raw = e instanceof Error ? e.message : "Request failed";
-      if (raw.includes("422")) {
+      if (e instanceof ChatRejected) {
+        setError(raw);
+      } else if (raw.includes("422")) {
         setError("Please enter a valid aid request (1–4000 characters).");
       } else if (raw.includes("401")) {
         setError("The aid desk rejected the session token. Refresh and submit again as a guest.");
@@ -111,7 +131,8 @@ export default function RequestPage() {
           ضرورت اردو یا انگریزی میں لکھیں
         </p>
         <p className="muted" style={{ margin: 0 }}>
-          Include area and a phone number if you can. The live pipeline shows each agent as it runs.
+          Include your area. A mobile number is required so the desk can reach you. The live
+          pipeline shows each agent as it runs.
         </p>
         <ul className="hero-proof" aria-label="What to expect">
           <li>Urdu or English</li>
@@ -183,7 +204,11 @@ export default function RequestPage() {
                 key={s.label}
                 type="button"
                 className={message === s.text ? "chip active" : "chip"}
-                onClick={() => setMessage(s.text)}
+                onClick={() => {
+                  setMessage(s.text);
+                  setPhone(s.phone);
+                  setPhoneError(null);
+                }}
               >
                 {s.label}
               </button>
@@ -198,6 +223,35 @@ export default function RequestPage() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
+          <label className="field-label" htmlFor="aid-phone">
+            Mobile number <span className="field-req">required</span>
+            <span className="muted field-hint">Yours or a family member's · used to check your request later</span>
+          </label>
+          <input
+            id="aid-phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="0300 1234567"
+            value={phone}
+            aria-invalid={phoneError ? true : undefined}
+            aria-describedby={phoneError ? "aid-phone-error" : undefined}
+            className={phoneError ? "input-invalid" : undefined}
+            onChange={(e) => {
+              setPhone(e.target.value);
+              if (phoneError) setPhoneError(null);
+            }}
+          />
+          {phoneError && (
+            <div id="aid-phone-error" className="field-error" role="alert">
+              <p>{phoneError}</p>
+              {phoneError === PHONE_REQUIRED && (
+                <p className="urdu" lang="ur">
+                  {PHONE_REQUIRED_UR}
+                </p>
+              )}
+            </div>
+          )}
           <div className="actions" style={{ marginTop: "0.75rem" }}>
             <button
               className="btn"
