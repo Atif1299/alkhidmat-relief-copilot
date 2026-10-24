@@ -21,6 +21,16 @@ def cosine_similarity(a: list[float], b: list[float]) -> float:
     return dot / (na * nb)
 
 
+def _payload(batch: list[str]) -> dict[str, Any]:
+    # Ask for EMBEDDING_DIM so vectors always match the pgvector column
+    # (text-embedding-v4 defaults to 1024; the column is 1536).
+    return {
+        "model": settings.dashscope_embedding_model,
+        "input": batch if len(batch) > 1 else batch[0],
+        "dimensions": settings.embedding_dim,
+    }
+
+
 async def embed_texts(texts: list[str]) -> list[list[float]]:
     """Embed via DashScope OpenAI-compatible embeddings API. Empty if no key."""
     if not texts:
@@ -39,11 +49,7 @@ async def embed_texts(texts: list[str]) -> list[list[float]]:
     async with httpx.AsyncClient(timeout=60.0) as client:
         for start in range(0, len(texts), batch_size):
             batch = texts[start : start + batch_size]
-            payload: dict[str, Any] = {
-                "model": settings.dashscope_embedding_model,
-                "input": batch if len(batch) > 1 else batch[0],
-            }
-            resp = await client.post(url, headers=headers, json=payload)
+            resp = await client.post(url, headers=headers, json=_payload(batch))
             resp.raise_for_status()
             data = resp.json()
             items = data.get("data") or []
@@ -76,11 +82,7 @@ def embed_texts_sync(texts: list[str]) -> list[list[float]]:
     with httpx.Client(timeout=60.0) as client:
         for start in range(0, len(texts), batch_size):
             batch = texts[start : start + batch_size]
-            payload: dict[str, Any] = {
-                "model": settings.dashscope_embedding_model,
-                "input": batch if len(batch) > 1 else batch[0],
-            }
-            resp = client.post(url, headers=headers, json=payload)
+            resp = client.post(url, headers=headers, json=_payload(batch))
             resp.raise_for_status()
             data = resp.json()
             items = data.get("data") or []

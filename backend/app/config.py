@@ -21,7 +21,7 @@ class Settings(BaseSettings):
         "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
     )
     # Embedding model (OpenAI-compatible DashScope). Dim must match EMBEDDING_DIM.
-    dashscope_embedding_model: str = "text-embedding-v2"
+    dashscope_embedding_model: str = "text-embedding-v4"
     embedding_dim: int = 1536
 
     # Tier 3 target: Postgres. SQLite only for legacy/tests without Docker.
